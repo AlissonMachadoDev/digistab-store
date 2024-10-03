@@ -1,0 +1,28 @@
+version: "3"
+services:
+  #=================================
+  # STORAGE SERVICES ENVIRONMENT
+  #=================================
+  storage:
+    image: minio/minio:latest
+    command: minio server /var/lib/minio/data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=@Password123!
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - storage:/var/lib/minio/data
+    networks:
+      - go_networks
+  #=================================
+  # VOLUME PERSISTENT DATA
+  #=================================
+volumes:
+  storage:
+  #=================================
+  # NETWORK SHARING GROUP
+  #=================================
+networks:
+  go_networks:
