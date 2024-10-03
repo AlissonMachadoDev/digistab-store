@@ -85,6 +85,7 @@ defmodule DigistabStoreWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import DigistabStoreWeb.CoreComponents
+      import DigistabStoreWeb.Layouts.LayoutComponents
       import DigistabStoreWeb.Gettext
 
       # Shortcut for generating JS commands
