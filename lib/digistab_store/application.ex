@@ -8,16 +8,18 @@ defmodule DigistabStore.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      # Start the Telemetry supervisor
       DigistabStoreWeb.Telemetry,
+      # Start the Ecto repository
       DigistabStore.Repo,
-      {DNSCluster, query: Application.get_env(:digistab_store, :dns_cluster_query) || :ignore},
+      # Start the PubSub system
       {Phoenix.PubSub, name: DigistabStore.PubSub},
-      # Start the Finch HTTP client for sending emails
+      # Start Finch
       {Finch, name: DigistabStore.Finch},
-      # Start a worker by calling: DigistabStore.Worker.start_link(arg)
-      # {DigistabStore.Worker, arg},
-      # Start to serve requests, typically the last entry
+      # Start the Endpoint (http/https)
       DigistabStoreWeb.Endpoint
+      # Start a worker by calling: DigistabStore.Worker.start_link(arg)
+      # {DigistabStore.Worker, arg}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

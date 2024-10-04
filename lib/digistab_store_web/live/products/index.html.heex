@@ -1,0 +1,52 @@
+<.header>
+  Listing Products
+  <:actions>
+    <.link patch={~p"/products/new"}>
+      <.button class="bg-zinc-900 hover:bg-zinc-700">New Product</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="products"
+  rows={@streams.products}
+  row_click={fn {_id, product} -> JS.navigate(~p"/products/#{product}") end}
+>
+  <:col :let={{_id, product}} label="Name"><%= product.name %></:col>
+  <:col :let={{_id, product}} label="Price"><%= product.price %></:col>
+  <:col :let={{_id, product}} label="Promotional price"><%= product.promotional_price %></:col>
+  <:col :let={{_id, product}} label="Stock"><%= product.stock %></:col>
+  <:col :let={{_id, product}} label="Description"><%= raw(product.description) %></:col>
+  <:action :let={{_id, product}}>
+    <div class="sr-only">
+      <.link navigate={~p"/products/#{product}"}>Show</.link>
+    </div>
+    <.link patch={~p"/products/#{product}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, product}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: product.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.product_modal
+  :if={@live_action in [:new, :edit]}
+  id="product-modal"
+  class="max-w-6xl"
+  show
+  on_cancel={JS.navigate(~p"/products")}
+>
+  <.live_component
+    module={DigistabStoreWeb.ProductLive.FormComponent}
+    id={@product.id || :new}
+    title="Create product"
+    action={@live_action}
+    product={@product}
+    patch={~p"/products"}
+    on_cancel={JS.navigate(~p"/products")}
+  />
+</.product_modal>

@@ -1,8 +1,8 @@
 defmodule DigistabStoreWeb.Layouts.LayoutComponents do
   use Phoenix.Component
 
-  alias Phoenix.LiveView.JS
-  import DigistabStoreWeb.Gettext
+  # alias Phoenix.LiveView.JS
+  # import DigistabStoreWeb.Gettext
   import DigistabStoreWeb.CoreComponents
 
   @doc """
