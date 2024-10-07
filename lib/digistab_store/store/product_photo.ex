@@ -2,7 +2,6 @@ defmodule DigistabStore.Store.ProductPhoto do
   use Ecto.Schema
   import Ecto.Changeset
 
-
   alias DigistabStore.Store
   alias Store.Product
 
