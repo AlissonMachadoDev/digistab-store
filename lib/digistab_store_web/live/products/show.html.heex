@@ -18,7 +18,7 @@
 
 <.back navigate={~p"/products"}>Back to products</.back>
 
-<.modal
+<.product_modal
   :if={@live_action == :edit}
   id="product-modal"
   show
@@ -32,4 +32,4 @@
     product={@product}
     patch={~p"/products/#{@product}"}
   />
-</.modal>
+</.product_modal>

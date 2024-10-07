@@ -43,7 +43,7 @@ defmodule DigistabStoreWeb do
         layouts: [html: DigistabStoreWeb.Layouts]
 
       import Plug.Conn
-      import DigistabStoreWeb.Gettext
+      import DigistabStore.Gettext
 
       unquote(verified_routes())
     end

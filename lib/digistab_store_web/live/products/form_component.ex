@@ -74,7 +74,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
                   collection={@status_collection}
                   name="select-status"
                   options={@status}
-                  value={List.first(@status_collection) |> Access.get(:name)}
+                  value={List.first(@status_collection) |> Map.get(:name)}
                   item={select_item(@status_collection, @product.status_id)}
                 />
               </div>
@@ -86,6 +86,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
                   name="select-category"
                   collection={@categories_collection}
                   options={@categories}
+                  value={List.first(@categories_collection) |> Map.get(:name)}
                   item={select_item(@categories_collection, @product.category_id)}
                 />
               </div>
@@ -210,7 +211,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
         </div>
         <.live_file_input upload={@uploads} class="hidden" />
       </div>
-      <div class="rounded-lg bg-red-200">
+      <div class="rounded-lg bg-red-200 mt-2">
         <div :for={entry <- @uploads.entries}>
           <div :for={err <- upload_errors(@uploads, entry)} class="mt-1 p-1" role="alert">
             <p><%= entry.client_name %> - <%= error_to_string(err) %></p>
@@ -322,32 +323,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     save_product(socket, socket.assigns.action, product_params)
   end
 
-  defp put_photos_url(socket, product) do
-    {completed, []} = uploaded_entries(socket, :photos)
-
-    urls =
-      for entry <- completed do
-        key = "digistab_store/products/#{entry.client_name}"
-
-        dest = Path.join("#{@config.bucket}.s3.amazonaws.com", key)
-
-        %{"url" => dest}
-      end
-  end
-
-  defp ext(entry) do
-    [ext | _] = MIME.extensions(entry.client_type)
-    ext
-  end
-
-  def consume_photos(socket, product) do
-    consume_uploaded_entries(socket, :photos, fn meta, entry ->
-      :ok
-    end)
-
-    {:ok, product}
-  end
-
   def handle_event("select-tag", %{"id" => tag_id}, socket) do
     tags = socket.assigns.tags
     tag = Enum.find(tags, &(&1.id == tag_id))
@@ -378,6 +353,31 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
       selected_tags: selected_tags,
       tag_name: tag_name
     ]
+  end
+
+  defp put_photos_url(socket, _product) do
+    {completed, []} = uploaded_entries(socket, :photos)
+
+    for entry <- completed do
+      key = "digistab_store/products/#{entry.client_name}"
+
+      dest = Path.join("#{@config.bucket}.s3.amazonaws.com", key)
+
+      %{"url" => dest}
+    end
+  end
+
+  defp ext(entry) do
+    [ext | _] = MIME.extensions(entry.client_type)
+    ext
+  end
+
+  def consume_photos(socket, product) do
+    consume_uploaded_entries(socket, :photos, fn _meta, _entry ->
+      :ok
+    end)
+
+    {:ok, product}
   end
 
   defp save_product(socket, :edit, product_params) do
@@ -447,7 +447,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     price = attrs[field]
 
     price =
-      if price == "",
+      if price in ["", nil],
         do: "0",
         else:
           price
@@ -457,13 +457,20 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     Map.put(attrs, field, price)
   end
 
-  defp validate_stock(%{"stock" => stock} = attrs) when is_integer(stock), do: attrs
-  defp validate_stock(%{"stock" => stock} = attrs) when stock == "", do: %{attrs | "stock" => 0}
+  defp validate_stock(%{"stock" => stock} = attrs) when is_integer(stock) do
+    attrs
+  end
+
+  defp validate_stock(%{"stock" => stock} = attrs) when stock in ["", nil],
+    do: %{attrs | "stock" => 0}
 
   defp validate_stock(%{"stock" => stock} = attrs) do
     attrs
     |> Map.put("stock", String.to_integer(stock))
   end
+
+  defp validate_stock(attrs),
+    do: Map.merge(attrs, %{"stock" => 0})
 
   defp validate_custom_select(attrs, field, collection) do
     value = Enum.find(collection, fn st -> st.name == attrs[field] end)

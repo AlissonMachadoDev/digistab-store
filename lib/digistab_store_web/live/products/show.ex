@@ -2,6 +2,7 @@ defmodule DigistabStoreWeb.ProductLive.Show do
   use DigistabStoreWeb, :live_view
 
   alias DigistabStore.Store
+  import DigistabStoreWeb.ProductLive.ProductComponents
 
   @impl true
   def mount(_params, _session, socket) do

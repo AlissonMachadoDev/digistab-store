@@ -67,7 +67,7 @@ defmodule DigistabStoreWeb.ProductLive.ProductComponents do
               phx-window-keydown={hide_modal(@on_cancel, @id)}
               phx-key="escape"
               phx-click-away={hide_modal(@on_cancel, @id)}
-              class="shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-lg bg-gray-200 p-4 shadow-lg ring-1 transition"
+              class="shadow-zinc-700/10 ring-zinc-700/10 relative hidden rounded-lg bg-violet-100 p-4 shadow-lg ring-1 transition"
             >
               <div class="absolute top-4 right-4">
                 <button
@@ -106,7 +106,7 @@ defmodule DigistabStoreWeb.ProductLive.ProductComponents do
                   <.link
                     :for={cancel <- @cancel}
                     phx-click={hide_modal(@on_cancel, @id)}
-                    class="bg-gray-400 text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+                    class="bg-gray-400 text-sm font-semibold leading-6  hover:text-violet-200"
                   >
                     <%= render_slot(cancel) %>
                   </.link>
@@ -166,7 +166,6 @@ defmodule DigistabStoreWeb.ProductLive.ProductComponents do
       </select>
       <.error :for={msg <- @errors}><%= msg %></.error>
       <div class="my-2 text-sm">
-        <% IO.inspect(@collection) %>
         <%= Enum.find(@collection, fn item -> item.name == @value end) |> then(& &1.description) %>
       </div>
     </div>
@@ -289,6 +288,8 @@ defmodule DigistabStoreWeb.ProductLive.ProductComponents do
   end
 
   def product_input(%{type: "custom_counter"} = assigns) do
+    # IO.inspect(assigns)
+
     ~H"""
     <div phx-feedback-for={@name} class="content-between">
       <.label for={@id} weight="font-medium"><%= @label %></.label>
@@ -296,7 +297,6 @@ defmodule DigistabStoreWeb.ProductLive.ProductComponents do
         <button
           type="button"
           data-action="decrement"
-          disabled={assigns.value == 0}
           class="rounded-md bg-violet-100 px-2 hover:bg-violet-800 hover:text-white active:bg-violet-500 disabled:bg-white disabled:text-gray-400"
         >
           <.icon name="hero-minus-circle-mini" class="h-4 w-4" />

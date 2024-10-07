@@ -2,11 +2,9 @@ defmodule DigistabStoreWeb.ErrorHelpers do
   @moduledoc """
   Conveniences for translating and building error messages.
   """
-
-  import Phoenix.HTML
   import Phoenix.HTML.Form
   use PhoenixHTMLHelpers
-  import DigistabStoreWeb.Gettext
+  use Gettext, backend: DigistabStore.Gettext
 
   @doc """
   Generates tag for inlined form input errors.
@@ -21,7 +19,7 @@ defmodule DigistabStoreWeb.ErrorHelpers do
   end
 
   @doc """
-  Translates an error message using gettext.
+  Translates an error message using
   """
   def translate_error({msg, opts}) do
     # When using gettext, we typically pass the strings we want
@@ -55,20 +53,20 @@ defmodule DigistabStoreWeb.ErrorHelpers do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
 
-  def error_to_string(:too_large), do: Gettext.dgettext("errors", "File too large")
-  def error_to_string(:not_accepted), do: Gettext.dgettext("errors", "Format not accepted")
+  def error_to_string(:too_large), do: dgettext("errors", "File too large")
+  def error_to_string(:not_accepted), do: dgettext("errors", "Format not accepted")
 
   def error_to_string(:too_many_files),
     do:
-      Gettext.dgettext(
+      dgettext(
         "errors",
         "You have selected too many files, please, cancel the excedent to continue."
       )
 
   def error_to_string(:external_client_failure),
-    do: Gettext.dgettext("errors", "Failed to upload")
+    do: dgettext("errors", "Failed to upload")
 
   def error_to_string(_) do
-    Gettext.dgettext("errors", "Failed to upload")
+    dgettext("errors", "Failed to upload")
   end
 end

@@ -231,7 +231,7 @@ defmodule DigistabStoreWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3",
+        "phx-submit-loading:opacity-75 rounded-lg bg-violet-700 hover:bg-violet-900 py-2 px-3",
         "text-sm font-semibold leading-6 text-white active:text-white/80",
         @class
       ]}
@@ -392,11 +392,12 @@ defmodule DigistabStoreWeb.CoreComponents do
   Renders a label.
   """
   attr :for, :string, default: nil
+  attr :weight, :string, default: "font-semibold"
   slot :inner_block, required: true
 
   def label(assigns) do
     ~H"""
-    <label for={@for} class="block text-sm font-semibold leading-6 text-zinc-800">
+    <label for={@for} class={["block text-sm leading-6 text-zinc-800 ", @weight]}>
       <%= render_slot(@inner_block) %>
     </label>
     """
@@ -506,7 +507,7 @@ defmodule DigistabStoreWeb.CoreComponents do
                 <span class="absolute -inset-y-px -right-4 left-0 group-hover:bg-zinc-50 sm:rounded-r-xl" />
                 <span
                   :for={action <- @action}
-                  class="relative ml-4 font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+                  class="relative ml-4 font-semibold leading-6 hover:text-violet-200"
                 >
                   <%= render_slot(action, @row_item.(row)) %>
                 </span>
@@ -661,9 +662,9 @@ defmodule DigistabStoreWeb.CoreComponents do
     # with our gettext backend as first argument. Translations are
     # available in the errors.po file (as we use the "errors" domain).
     if count = opts[:count] do
-      Gettext.dngettext(DigistabStoreWeb.Gettext, "errors", msg, msg, count, opts)
+      Gettext.dngettext(DigistabStore.Gettext, "errors", msg, msg, count, opts)
     else
-      Gettext.dgettext(DigistabStoreWeb.Gettext, "errors", msg, opts)
+      Gettext.dgettext(DigistabStore.Gettext, "errors", msg, opts)
     end
   end
 
