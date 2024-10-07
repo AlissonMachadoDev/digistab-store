@@ -280,19 +280,25 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
   @impl true
 
-  def handle_event("validate", %{"product" => product_params, "search_tag" => tag_name}, socket) do
-    params =
+  def handle_event(
+        "validate",
+        %{"product" => product_params, "search_tag" => tag_name} = params,
+        socket
+      ) do
+    product_params =
       product_params
-      |> validate_price("price")
-      |> validate_price("promotional_price")
+      |> validate_price("price", params["put-price"])
+      |> validate_price("promotional_price", params["put-promo-price"])
       |> validate_custom_select("status", socket.assigns.status_collection)
       |> validate_custom_select("category", socket.assigns.categories_collection)
-      |> validate_stock()
+      |> validate_stock(params["put-stock"])
+      |> IO.inspect(label: "product_params validation")
 
     changeset =
       socket.assigns.product
-      |> Store.change_product(params)
+      |> Store.change_product(product_params)
       |> Map.put(:action, :validate)
+      |> IO.inspect(label: "changeset validation")
 
     assigns =
       if tag_name == "" do
@@ -310,12 +316,12 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
      |> assign(assigns)}
   end
 
-  def handle_event("save", %{"product" => product_params}, socket) do
+  def handle_event("save", %{"product" => product_params} = params, socket) do
     product_params =
-      product_params
-      |> validate_price("price")
-      |> validate_price("promotional_price")
-      |> validate_stock()
+      socket.assigns.product
+      |> validate_price("price", params["put-price"])
+      |> validate_price("promotional_price", params["put-promo-price"])
+      |> validate_stock(params["put-stock"])
       |> save_custom_select("status", socket.assigns.status_collection)
       |> save_custom_select("category", socket.assigns.categories_collection)
       |> Map.put("photos", put_photos_url(socket, %{}))
@@ -443,9 +449,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     ]
   end
 
-  defp validate_price(attrs, field) do
-    price = attrs[field]
-
+  defp validate_price(attrs, field, price) do
     price =
       if price in ["", nil],
         do: "0",
@@ -453,12 +457,18 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
           price
           |> String.replace(~r/\,|\./, "")
           |> String.to_integer()
+          |> Decimal.div(100)
 
     Map.put(attrs, field, price)
   end
 
-  defp validate_stock(%{"stock" => stock} = attrs) when is_integer(stock) do
+  defp validate_stock(attrs, stock) when is_integer(stock) do
+    %{attrs | "stock" => stock}
+  end
+
+  defp validate_stock(attrs, stock) do
     attrs
+    |> Map.put("stock", String.to_integer(stock))
   end
 
   defp validate_stock(%{"stock" => stock} = attrs) when stock in ["", nil],
