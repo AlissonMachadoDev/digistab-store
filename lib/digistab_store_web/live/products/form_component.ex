@@ -25,13 +25,13 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
         multipart
         for={@form}
         id="product-form"
-        phx-target={@myself}
         phx-change="validate"
         phx-submit="save"
+        phx-target={@myself}
       >
-        <div class="flex flex-col md:mx-4 md:flex-row">
+        <div class="flex flex-col md:mx-4 md:flex-row rounded-md">
           <div class="mb-4 md:mr-4 md:mb-0 md:w-3/5">
-            <div class="mb-4 space-y-4 rounded-md bg-white p-4 text-left">
+            <div class="mb-4 space-y-4 shadow-inner-md bg-white p-4 text-left">
               <.input
                 field={@form[:name]}
                 type="text"
@@ -43,24 +43,42 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
                 type="wysiwyg"
                 label="Description"
                 name="put-description"
+                value={@product.description}
               />
             </div>
             <div class="mb-4 h-fit rounded-md bg-white p-4">
-              <.live_upload uploads={@uploads.photos} myself={@myself} />
+              <.live_upload :if={@action == :new} uploads={@uploads.photos} myself={@myself} />
+              <div :if={@action != :new}>
+                <div class="flex flex-col">
+                  <div class="flex flex-col justify-around md:flex-row h-36 w-full rounded-md border-2 border-dashed border-gray-300 p-4 text-center">
+                    <div class="text-bold text-xl text-violet-700">
+                      Photo update will be comming soon
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="grid grid-rows-3 gap-4 rounded-md bg-white p-4 sm:grid-cols-3 sm:grid-rows-none">
-              <.product_input field={@form[:price]} type="price" label="Price" name="put-price" />
+            <div class="grid grid-rows-3 gap-4 rounded-md bg-white p-4 sm:grid-cols-3 sm:grid-rows-none bottom-20">
+              <.product_input
+                field={@form[:price]}
+                type="price"
+                label="Price"
+                name="put-price"
+                value={@product.price}
+              />
               <.product_input
                 field={@form[:promotional_price]}
                 type="price"
                 label="Promotional price"
                 name="put-promo-price"
+                value={@product.promotional_price}
               />
               <.product_input
                 field={@form[:stock]}
                 type="custom_counter"
                 label="Stock"
                 name="put-stock"
+                value={@product.stock}
               />
             </div>
           </div>
@@ -74,8 +92,8 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
                   collection={@status_collection}
                   name="select-status"
                   options={@status}
-                  value={List.first(@status_collection) |> Map.get(:name)}
-                  item={select_item(@status_collection, @product.status_id)}
+                  value={select_item(@status_collection, @product.status_id) |> Map.get(:name)}
+                  item={select_item(@status_collection, @product.status_id) |> Map.get(:name)}
                 />
               </div>
               <div class="mb-4 w-full rounded-md bg-white p-4 sm:w-1/2 md:w-full">
@@ -86,8 +104,8 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
                   name="select-category"
                   collection={@categories_collection}
                   options={@categories}
-                  value={List.first(@categories_collection) |> Map.get(:name)}
-                  item={select_item(@categories_collection, @product.category_id)}
+                  value={select_item(@categories_collection, @product.category_id) |> Map.get(:name)}
+                  item={select_item(@categories_collection, @product.category_id) |> Map.get(:name)}
                 />
               </div>
             </div>
@@ -200,13 +218,13 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
             </div>
             <div :if={!has_uploads?(@uploads.entries)} class="hidden font-medium text-black md:block">
               <p>
-                Drag & drop the product photos here<br />or&nbsp;<a class="text-violet-600">browse the files</a>&nbsp;from device
+                Drag & drop the product photos here<br />or&nbsp;<a class="text-violet-700">browse the files</a>&nbsp;from device
               </p>
             </div>
             <div :if={has_uploads?(@uploads.entries)} class="font-medium text-black md:block">
-              <a class="text-center text-violet-600">Add more...</a>&nbsp;
+              <a class="text-center text-violet-700">Add more...</a>&nbsp;
             </div>
-            <a class="text-center text-red-400 text-sm">(max files: 5)</a>&nbsp;
+            <a class="text-center text-red-700 text-sm">(max files: 5)</a>&nbsp;
           </div>
         </div>
         <.live_file_input upload={@uploads} class="hidden" />
@@ -263,8 +281,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
   @impl true
   def update(%{product: product} = assigns, socket) do
-    changeset = Store.change_product(product)
-
     {:ok,
      socket
      |> allow_upload(:photos,
@@ -273,13 +289,53 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
        external: &presign_upload/2,
        max_file_size: 10_000_000
      )
-     |> assign(initial_assigns())
+     |> assign(initial_assigns(assigns.action, product))
      |> assign(assigns)
-     |> assign_form(changeset)}
+     |> assign_form(Store.change_product(product))}
   end
 
   @impl true
+  def handle_event(
+        "validate",
+        %{"type" => "set-description", "value" => description},
+        socket
+      ) do
+    product = socket.assigns.product
 
+    socket =
+      assign(
+        socket,
+        :product,
+        %{product | description: description}
+        |> IO.inspect(label: "description")
+      )
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event(
+        "validate",
+        %{"type" => "set-integer-price", "field" => field_name, "value" => value},
+        socket
+      ) do
+    product = socket.assigns.product
+
+    value = String.replace(value, ~r[\,|\.], "") |> String.to_integer()
+
+    field = define_field(field_name)
+
+    socket =
+      assign(
+        socket,
+        :product,
+        Map.put(product, String.to_atom(field), value)
+      )
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event(
         "validate",
         %{"product" => product_params, "search_tag" => tag_name} = params,
@@ -287,18 +343,22 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
       ) do
     product_params =
       product_params
-      |> validate_price("price", params["put-price"])
-      |> validate_price("promotional_price", params["put-promo-price"])
-      |> validate_custom_select("status", socket.assigns.status_collection)
-      |> validate_custom_select("category", socket.assigns.categories_collection)
+      |> validate_custom_select(
+        "status",
+        socket.assigns.status_collection,
+        params["select-status"]
+      )
+      |> validate_custom_select(
+        "category",
+        socket.assigns.categories_collection,
+        params["select-category"]
+      )
       |> validate_stock(params["put-stock"])
-      |> IO.inspect(label: "product_params validation")
 
     changeset =
       socket.assigns.product
       |> Store.change_product(product_params)
       |> Map.put(:action, :validate)
-      |> IO.inspect(label: "changeset validation")
 
     assigns =
       if tag_name == "" do
@@ -310,21 +370,24 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
         search_tags(tags, selected_tags, tag_name)
       end
 
-    {:noreply,
-     socket
-     |> assign_form(changeset)
-     |> assign(assigns)}
+    socket =
+      socket
+      |> assign_form(changeset)
+      |> assign(
+        :product,
+        Ecto.Changeset.apply_changes(changeset)
+      )
+      |> assign(assigns)
+
+    {:noreply, socket}
   end
 
-  def handle_event("save", %{"product" => product_params} = params, socket) do
+  def handle_event("save", %{"product" => _product_params}, socket) do
     product_params =
       socket.assigns.product
-      |> validate_price("price", params["put-price"])
-      |> validate_price("promotional_price", params["put-promo-price"])
-      |> validate_stock(params["put-stock"])
-      |> save_custom_select("status", socket.assigns.status_collection)
-      |> save_custom_select("category", socket.assigns.categories_collection)
-      |> Map.put("photos", put_photos_url(socket, %{}))
+      |> Map.put(:photos, put_photos_url(socket, %{}))
+      |> Map.drop([:__meta__, :__struct__])
+      |> IO.inspect()
 
     save_product(socket, socket.assigns.action, product_params)
   end
@@ -367,15 +430,10 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     for entry <- completed do
       key = "digistab_store/products/#{entry.client_name}"
 
-      dest = Path.join("#{@config.bucket}.s3.amazonaws.com", key)
+      dest = Path.join("http://#{@config.bucket}.s3.amazonaws.com", key)
 
       %{"url" => dest}
     end
-  end
-
-  defp ext(entry) do
-    [ext | _] = MIME.extensions(entry.client_type)
-    ext
   end
 
   def consume_photos(socket, product) do
@@ -387,9 +445,11 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
   end
 
   defp save_product(socket, :edit, product_params) do
-    case Store.update_product(socket.assigns.product, product_params) do
+    product = Store.get_product!(socket.assigns.product.id)
+
+    case Store.update_product(product, product_params) do
       {:ok, product} ->
-        notify_parent({:saved, product})
+        notify_parent({:saved, product |> Store.preload_product!()})
 
         {:noreply,
          socket
@@ -404,7 +464,8 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
   defp save_product(socket, :new, product_params) do
     case Store.create_product(product_params) do
       {:ok, product} ->
-        notify_parent({:saved, product})
+        notify_parent({:saved, product |> Store.preload_product!()})
+        |> IO.inspect(label: "notify")
 
         {:noreply,
          socket
@@ -413,6 +474,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign_form(socket, changeset)}
+        |> IO.inspect(label: "error")
     end
   end
 
@@ -422,7 +484,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
 
-  defp initial_assigns() do
+  defp initial_assigns(:new, _product) do
     status_collection = DigistabStore.Store.list_status_collection()
 
     status =
@@ -449,17 +511,32 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     ]
   end
 
-  defp validate_price(attrs, field, price) do
-    price =
-      if price in ["", nil],
-        do: "0",
-        else:
-          price
-          |> String.replace(~r/\,|\./, "")
-          |> String.to_integer()
-          |> Decimal.div(100)
+  defp initial_assigns(:edit, product) do
+    status_collection = DigistabStore.Store.list_status_collection()
 
-    Map.put(attrs, field, price)
+    status =
+      status_collection
+      |> Enum.map(& &1.name)
+
+    categories_collection = DigistabStore.Store.list_categories()
+
+    categories =
+      categories_collection
+      |> Enum.map(& &1.name)
+
+    tags = DigistabStore.Store.list_tags()
+
+    [
+      status: status,
+      status_collection: status_collection,
+      categories: categories,
+      categories_collection: categories_collection,
+      tags: tags,
+      fetched_tags: [],
+      selected_tags: product.tags,
+      tag_name: "",
+      photos: product.photos
+    ]
   end
 
   defp validate_stock(attrs, stock) when is_integer(stock) do
@@ -471,25 +548,11 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     |> Map.put("stock", String.to_integer(stock))
   end
 
-  defp validate_stock(%{"stock" => stock} = attrs) when stock in ["", nil],
-    do: %{attrs | "stock" => 0}
+  defp validate_custom_select(attrs, field, collection, value) do
+    field_value = Enum.find(collection, fn st -> st.name == value end)
 
-  defp validate_stock(%{"stock" => stock} = attrs) do
-    attrs
-    |> Map.put("stock", String.to_integer(stock))
-  end
-
-  defp validate_stock(attrs),
-    do: Map.merge(attrs, %{"stock" => 0})
-
-  defp validate_custom_select(attrs, field, collection) do
-    value = Enum.find(collection, fn st -> st.name == attrs[field] end)
-    Map.put(attrs, field, value)
-  end
-
-  defp save_custom_select(attrs, field, collection) do
-    value = Enum.find(collection, fn st -> st.name == attrs[field <> "_name"] end)
-    Map.put(attrs, field <> "_id", value.id)
+    Map.put(attrs, field, field_value)
+    |> Map.put(field <> "_id", field_value.id)
   end
 
   defp select_item(items, id) do
@@ -498,7 +561,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     else
       Enum.find(items, &(&1.id == id))
     end
-    |> then(& &1.name)
   end
 
   def has_uploads?(uploads), do: length(uploads) > 0
@@ -544,4 +606,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
     {:ok, meta, socket}
   end
+
+  defp define_field("put-price"), do: "price"
+  defp define_field("put-promo-price"), do: "promotional_price"
 end

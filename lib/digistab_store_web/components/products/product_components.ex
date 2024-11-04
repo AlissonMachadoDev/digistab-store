@@ -166,7 +166,8 @@ defmodule DigistabStoreWeb.ProductLive.ProductComponents do
       </select>
       <.error :for={msg <- @errors}><%= msg %></.error>
       <div class="my-2 text-sm">
-        <%= Enum.find(@collection, fn item -> item.name == @value end) |> then(& &1.description) %>
+        <%= Enum.find(@collection, fn item -> item.name == @value end)
+        |> then(& &1.description) %>
       </div>
     </div>
     """
@@ -177,7 +178,8 @@ defmodule DigistabStoreWeb.ProductLive.ProductComponents do
     <div phx-feedback-for={@name} class="">
       <.label for={@id} weight="font-medium"><%= @label %></.label>
       <textarea id={@id || @name} name={@name} hidden={true} phx-hook="TrixEditor">
-        <%= Phoenix.HTML.Form.normalize_value("textarea", @value) %>
+
+      <%= Phoenix.HTML.Form.normalize_value("textarea", @value) %>
       </textarea>
       <div
         id="richtext"
@@ -229,7 +231,12 @@ defmodule DigistabStoreWeb.ProductLive.ProductComponents do
             </span>
           </div>
         </trix-toolbar>
-        <trix-editor input={@id} class="w-full border-none px-2 text-left" toolbar="trix-toolbar">
+        <trix-editor
+          input={@id}
+          value={@value}
+          class="w-full border-none px-2 text-left"
+          toolbar="trix-toolbar"
+        >
         </trix-editor>
       </div>
       <.error :for={msg <- @errors}><%= msg %></.error>
@@ -264,24 +271,29 @@ defmodule DigistabStoreWeb.ProductLive.ProductComponents do
     ~H"""
     <div phx-feedback-for={@name} class="content-between">
       <.label for={@id} weight="font-medium"><%= @label %></.label>
-      <input
-        type={@type}
-        name={@name}
-        id={@id || @name}
-        value={Phoenix.HTML.Form.normalize_value("number", @value) |> set_initial_value(@currency)}
-        class={[
-          "block w-full rounded-lg  border-violet-300 py-[7px] px-[11px]",
-          "text-zinc-900 focus:outline-none focus:ring-4 sm:text-sm sm:leading-6 text-right",
-          "phx-no-feedback:border-violet-300 phx-no-feedback:focus:border-violet-400 phx-no-feedback:focus:ring-zinc-800/5",
-          "border border-violet-300 focus:border-violet-400 focus:ring-zinc-800/5",
-          @errors != [] && "border-rose-400 focus:border-rose-400 focus:ring-rose-400/10"
-        ]}
-        currency={@currency}
-        autocomplete="off"
-        phx-hook="IntegerPriceInput"
-        phx-update="ignore"
-        {@rest}
-      />
+      <div class="flex flex-row items-center">
+        <span class="px-4 py-2 rounded-md bg-green-200 mx-1">
+          R$
+        </span>
+        <input
+          type={@type}
+          name={@name}
+          id={@id || @name}
+          value={Phoenix.HTML.Form.normalize_value("number", @value) |> set_initial_value(@currency)}
+          class={[
+            "block w-full rounded-lg  border-violet-300 py-[7px] px-[11px]",
+            "text-zinc-900 focus:outline-none focus:ring-4 sm:text-sm sm:leading-6 text-right",
+            "phx-no-feedback:border-violet-300 phx-no-feedback:focus:border-violet-400 phx-no-feedback:focus:ring-zinc-800/5",
+            "border border-violet-300 focus:border-violet-400 focus:ring-zinc-800/5",
+            @errors != [] && "border-rose-400 focus:border-rose-400 focus:ring-rose-400/10"
+          ]}
+          currency={@currency}
+          autocomplete="off"
+          phx-hook="IntegerPriceInput"
+          phx-update="ignore"
+          {@rest}
+        />
+      </div>
       <.error :for={msg <- @errors}><%= msg %></.error>
     </div>
     """
