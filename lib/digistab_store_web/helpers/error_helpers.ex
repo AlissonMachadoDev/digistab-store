@@ -4,7 +4,6 @@ defmodule DigistabStoreWeb.ErrorHelpers do
   """
   import Phoenix.HTML.Form
   use PhoenixHTMLHelpers
-  import DigistabStoreWeb.Gettext
 
   @doc """
   Generates tag for inlined form input errors.

@@ -202,11 +202,11 @@ defmodule DigistabStoreWeb.CoreComponents do
   def simple_form(assigns) do
     ~H"""
     <.form :let={f} for={@for} as={@as} {@rest}>
-      <div class="mt-10 space-y-8 bg-white">
+      <div class="m-2 space-y-8 bg-white p-2 rounded-md shadow-sm">
         <%= render_slot(@inner_block, f) %>
-        <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
-          <%= render_slot(action, f) %>
-        </div>
+      </div>
+      <div :for={action <- @actions} class="mt-4 flex items-center justify-center gap-6">
+        <%= render_slot(action, f) %>
       </div>
     </.form>
     """
@@ -231,7 +231,7 @@ defmodule DigistabStoreWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg bg-violet-700 hover:bg-violet-900 py-2 px-3",
+        "phx-submit-loading:opacity-75 rounded-lg py-2 px-3",
         "text-sm font-semibold leading-6 text-white active:text-white/80",
         @class
       ]}
