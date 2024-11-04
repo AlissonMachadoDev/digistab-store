@@ -1,35 +1,119 @@
-<.header>
-  <%= @product.name %>
-  <:subtitle><%= raw(@product.description) %></:subtitle>
-  <:actions>
-    <.link patch={~p"/products/#{@product}/show/edit"} phx-click={JS.push_focus()}>
-      <.button class="bg-zinc-900 hover:bg-zinc-700">Edit product</.button>
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="bg-white rounded-lg shadow-lg overflow-hidden pb-4">
+    <div class="md:flex">
+      <!-- Galeria de Imagens -->
+      <div class="md:w-1/2 flex flex-row">
+        <div class="flex gap-2 px-2 w-32 overflow-x-auto">
+          <%= for photo <- @product.photos do %>
+            <div class="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 border-violet-500">
+              <img src={photo.url} alt={photo.description} class="w-full h-full object-cover" />
+            </div>
+          <% end %>
+        </div>
+        <div class="relative h-96">
+          <%= if Enum.any?(@product.photos) do %>
+            <img
+              src={List.first(@product.photos).url}
+              alt={@product.name}
+              class="w-full h-full object-cover rounded-lg"
+            />
+          <% else %>
+            <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+              <p class="text-gray-500">No image available</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <!-- Informações do Produto -->
+      <div class="md:w-1/2 p-8">
+        <div class="flex justify-between items-start">
+          <h1 class="text-2xl font-bold text-gray-900"><%= @product.name %></h1>
+          <div class={@product.status.name <> " text-sm"}>
+            <%= @product.status.name %>
+          </div>
+        </div>
+
+        <div class="mt-4 flex justify-end ">
+          <span class="text-gray-400 line-through text-lg">
+            R$ <%= format_price(@product.price) %>
+          </span>
+          <span class="ml-2 text-3xl font-bold text-violet-600">
+            R$ <%= format_price(@product.promotional_price) %>
+          </span>
+        </div>
+
+        <div class="mt-6 prose prose-violet">
+          <%= raw(@product.description) %>
+        </div>
+
+        <div class="mt-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <span class="text-gray-700 mr-2">Category:</span>
+              <span class="text-violet-600 font-medium"><%= @product.category.name %></span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-gray-700 mr-2">Stock:</span>
+              <span class={stock_color(@product.stock)}><%= @product.stock %> units</span>
+            </div>
+          </div>
+        </div>
+        <!-- Tags -->
+        <div class="mt-6">
+          <span class="text-gray-700">Tags:</span>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <%= for tag <- @product.tags do %>
+              <span class="px-3 py-1 rounded-full text-sm bg-violet-100 text-violet-800">
+                <%= tag.name %>
+              </span>
+            <% end %>
+          </div>
+        </div>
+        <!-- Ações -->
+        <div class="mt-8 flex gap-4">
+          <button
+            :if={@product.stock > 0}
+            phx-click="add_to_cart"
+            class="flex-1 bg-violet-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-violet-700 transition-colors"
+          >
+            Add to Cart
+          </button>
+          <button
+            :if={@product.stock == 0}
+            disabled
+            class="flex-1 bg-gray-300 text-gray-500 px-6 py-3 rounded-lg font-semibold cursor-not-allowed"
+          >
+            Out of Stock
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Navegação -->
+  <div class="mt-8 flex justify-between">
+    <.link
+      navigate={~p"/products"}
+      class="text-violet-600 hover:text-violet-800 flex items-center gap-2"
+    >
+      <.icon name="hero-arrow-left-solid" class="w-4 h-4" /> Back to Products
     </.link>
-  </:actions>
-</.header>
 
-<.list>
-  <:item title="Name"><%= @product.name %></:item>
-  <:item title="Price"><%= @product.price %></:item>
-  <:item title="Promotional price"><%= @product.promotional_price %></:item>
-  <:item title="Stock"><%= @product.stock %></:item>
-  <:item title="Description"><%= raw(@product.description) %></:item>
-</.list>
-
-<.back navigate={~p"/products"}>Back to products</.back>
-
-<.product_modal
-  :if={@live_action == :edit}
-  id="product-modal"
-  show
-  on_cancel={JS.patch(~p"/products/#{@product}")}
->
-  <.live_component
-    module={DigistabStoreWeb.ProductLive.FormComponent}
-    id={@product.id}
-    title={@page_title}
-    action={@live_action}
-    product={@product}
-    patch={~p"/products/#{@product}"}
-  />
-</.product_modal>
+    <%= if true do %>
+      <div class="flex gap-4">
+        <.link
+          navigate={~p"/products/#{@product}/edit"}
+          class="px-4 py-2 rounded-lg bg-violet-100 text-violet-700 hover:bg-violet-200"
+        >
+          Edit
+        </.link>
+        <button
+          phx-click="delete_product"
+          data-confirm="Are you sure?"
+          class="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
+        >
+          Delete
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
