@@ -1,3 +1,6 @@
+/**
+ * @type {Object.<string, import("phoenix_live_view").ViewHook>}
+ */
 export const IntegerPriceInput = {
   mounted() {
     this.el.addEventListener("focus", e => {
@@ -30,6 +33,7 @@ export const IntegerPriceInput = {
           this.el.value = `${match[1]},${match[2]}`;
         }
       }
+      this.pushEventTo(this.el, "validate", {type: "set-integer-price", field: this.el.name, value: this.el.value})
     });
     this.handleEvent("reset-field", ({field_id, price}) => {
       let str = price.toString()

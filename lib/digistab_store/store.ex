@@ -18,7 +18,33 @@ defmodule DigistabStore.Store do
 
   """
   def list_products do
-    Repo.all(Product)
+    Product
+    |> preload([:status, :category, :photos])
+    |> order_by([p], p.inserted_at)
+    |> Repo.all()
+  end
+
+  # Buscar produtos featured
+  def list_featured_products do
+    Product
+    |> where(featured?: true)
+    |> Repo.all()
+  end
+
+  # Buscar produtos not featured
+  def list_other_products do
+    Product
+    |> where(featured?: false)
+    |> Repo.all()
+  end
+
+  # Marcar produto como featured
+  def mark_as_featured(product) do
+    product
+    |> Product.changeset(%{featured?: true})
+    |> IO.inspect(label: "changeseted")
+    |> Repo.update()
+    |> IO.inspect(label: "updated")
   end
 
   @doc """

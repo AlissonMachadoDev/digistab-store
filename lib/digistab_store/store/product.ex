@@ -15,6 +15,7 @@ defmodule DigistabStore.Store.Product do
     field :price, :integer
     field :promotional_price, :integer
     field :stock, :integer, default: 0
+    field :featured?, :boolean, default: false
 
     field :status_name, :string, virtual: true
     field :category_name, :string, virtual: true
@@ -37,7 +38,8 @@ defmodule DigistabStore.Store.Product do
       :description,
       :stock,
       :status_id,
-      :category_id
+      :category_id,
+      :featured?
     ])
     |> validate_required([:name, :price, :promotional_price, :description])
     |> validate_number(:stock, greater_than_or_equal_to: 0)

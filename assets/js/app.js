@@ -38,6 +38,11 @@ let liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
   dom: {
       onBeforeElUpdated(from, to) {
+        for (const attr of from.attributes) {
+          if (attr.name.startsWith("data-js-")) {
+            to.setAttribute(attr.name, attr.value);
+          }
+        }
           if (from._x_dataStack) {
               window.Alpine.clone(from, to)
           }

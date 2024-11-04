@@ -1,3 +1,7 @@
+/**
+ * @type {Object.<string, import("phoenix_live_view").ViewHook>}
+ */
+
 export const CustomCounterInput = {
     mounted() {
         function decrement(e) {
@@ -8,6 +12,7 @@ export const CustomCounterInput = {
             let value = Number(target.value);
             value--;
             target.value = value;
+            console.log(value)
             if (value <= 0) {
                 btn.setAttribute("disabled", "disabled");
             } 
@@ -28,7 +33,7 @@ export const CustomCounterInput = {
             'button[data-action="decrement"]'
         );
 
-        dec.removeAttribute("disabled");
+            dec.removeAttribute("disabled");
 
             target.dispatchEvent(new Event("change", { bubbles:true }));
         }
@@ -47,7 +52,9 @@ export const CustomCounterInput = {
             'button[data-action="decrement"]'
         );
 
+        if(Number(this.el.value) <= 0) {
         btn.setAttribute("disabled", "disabled");
+        }
 
         decrementButtons.forEach(btn => {
             btn.addEventListener("click", decrement);
