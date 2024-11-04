@@ -8,10 +8,15 @@ defmodule DigistabStoreWeb.ProductCarousel do
       x-data="{
         currentIndex: 0,
         items: [],
+        intervalId: null,
+        startInterval() {
+          if (this.intervalId) clearInterval(this.intervalId);
+          this.intervalId = setInterval(() => this.next(), 3000);
+        },
         init() {
           this.items = [...this.$refs.carousel.children];
           this.showSlide(0);
-          setInterval(() => this.next(), 10000); // Auto-advance every 10 seconds
+          this.startInterval();
         },
         next() {
           this.currentIndex = (this.currentIndex + 1) % (this.items.length - 1);
@@ -35,6 +40,7 @@ defmodule DigistabStoreWeb.ProductCarousel do
               el.classList.add('translate-x-full');
             }
           });
+          this.startInterval();
         }
       }"
       class="relative w-full overflow-hidden"
