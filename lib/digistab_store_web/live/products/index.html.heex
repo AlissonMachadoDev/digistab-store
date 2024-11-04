@@ -1,52 +1,75 @@
-<.header>
-  Listing Products
-  <:actions>
-    <.link patch={~p"/products/new"}>
-      <.button class="bg-zinc-900 hover:bg-zinc-700">New Product</.button>
-    </.link>
-  </:actions>
-</.header>
-
-<.table
-  id="products"
-  rows={@streams.products}
-  row_click={fn {_id, product} -> JS.navigate(~p"/products/#{product}") end}
->
-  <:col :let={{_id, product}} label="Name"><%= product.name %></:col>
-  <:col :let={{_id, product}} label="Price"><%= product.price %></:col>
-  <:col :let={{_id, product}} label="Promotional price"><%= product.promotional_price %></:col>
-  <:col :let={{_id, product}} label="Stock"><%= product.stock %></:col>
-  <:col :let={{_id, product}} label="Description"><%= raw(product.description) %></:col>
-  <:action :let={{_id, product}}>
-    <div class="sr-only">
-      <.link navigate={~p"/products/#{product}"}>Show</.link>
+<div class="flex flex-row mt-8">
+  <div name="search bar" class="flex w-2/3 mx-auto flex-row px-4">
+    <.header>
+      Listing Products
+      <:actions>
+        <.link patch={~p"/products/new"}>
+          <.button class="bg-zinc-900 hover:bg-zinc-700">New Product</.button>
+        </.link>
+      </:actions>
+    </.header>
+    <div class="w-full flex flex-row items-center justify-end">
+      <.form
+        :let={f}
+        for={%{}}
+        as={:search}
+        phx-change="search"
+        phx-submit="search"
+        class="relative flex items-center"
+      >
+        <.input
+          field={f[:query]}
+          type="text"
+          placeholder="search..."
+          value={@query}
+          class="w-full px-4 py-3 bg-white rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 text-gray-600 text-lg"
+          phx-debounce="300"
+          autocomplete="off"
+        />
+        <button type="submit" class="absolute right-3 p-1" aria-label="Search">
+          <.icon name="hero-magnifying-glass" class="h-6 w-6 text-gray-400 hover:text-violet-500" />
+        </button>
+      </.form>
+      <div></div>
     </div>
-    <.link patch={~p"/products/#{product}/edit"}>Edit</.link>
-  </:action>
-  <:action :let={{id, product}}>
-    <.link
-      phx-click={JS.push("delete", value: %{id: product.id}) |> hide("##{id}")}
-      data-confirm="Are you sure?"
-    >
-      Delete
-    </.link>
-  </:action>
-</.table>
+  </div>
+</div>
+<div class="flex flex-col md:flex-row mt-4 rounded-md">
+  <div class="md:mx-auto w-full lg:w-2/3 responsive-box ">
+    <div class="container mx-auto px-4">
+      <!-- Featured Products -->
+      <section class="mb-12 bg-violet-50 shadow-sm p-4">
+        <h2 class="text-xl font-bold mb-6 text-center">DESTAQUES</h2>
+        <.featured_carousel featured_products={@featured_products} />
+      </section>
+      <!-- Other Products -->
+      <section class="mb-12 bg-violet-50 shadow-sm p-4 rounded-md">
+        <h2 class="text-xl font-bold mb-6">Outros produtos</h2>
 
-<.product_modal
-  :if={@live_action in [:new, :edit]}
-  id="product-modal"
-  class="max-w-6xl"
-  show
-  on_cancel={JS.navigate(~p"/products")}
->
-  <.live_component
-    module={DigistabStoreWeb.ProductLive.FormComponent}
-    id={@product.id || :new}
-    title="Create product"
-    action={@live_action}
-    product={@product}
-    patch={~p"/products"}
+        <div class="container mx-auto px-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <.product_card :for={{_dom_id, product} <- @streams.products} product={product} />
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <.product_modal
+    :if={@live_action in [:new, :edit]}
+    id="product-modal"
+    class="max-w-6xl"
+    show
     on_cancel={JS.navigate(~p"/products")}
-  />
-</.product_modal>
+  >
+    <.live_component
+      module={DigistabStoreWeb.ProductLive.FormComponent}
+      id={@product.id || :new}
+      title="Create product"
+      action={@live_action}
+      product={@product}
+      patch={~p"/products"}
+      on_cancel={JS.navigate(~p"/products")}
+    />
+  </.product_modal>
+</div>

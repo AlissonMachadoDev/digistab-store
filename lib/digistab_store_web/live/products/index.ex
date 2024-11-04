@@ -5,10 +5,22 @@ defmodule DigistabStoreWeb.ProductLive.Index do
   alias DigistabStore.Store.Product
 
   import DigistabStoreWeb.ProductLive.ProductComponents
+  import DigistabStoreWeb.ProductCarousel
+  import DigistabStoreWeb.Components.ProductCard
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, stream(socket, :products, Store.list_products())}
+    featured_products = Store.list_featured_products()
+
+    products = Store.list_products()
+
+    {:ok,
+     assign(socket,
+       query: "",
+       cart_count: 10
+     )
+     |> assign(:featured_products, featured_products)
+     |> stream(:products, products)}
   end
 
   @impl true
@@ -36,14 +48,41 @@ defmodule DigistabStoreWeb.ProductLive.Index do
 
   @impl true
   def handle_info({DigistabStoreWeb.ProductLive.FormComponent, {:saved, product}}, socket) do
-    {:noreply, stream_insert(socket, :products, product)}
+    socket =
+      socket
+      |> stream_insert(:products, product)
+      |> reload_featured_products(product)
+
+    {:noreply, socket}
   end
 
   @impl true
+  def handle_event("search", %{"search" => %{"query" => _query}}, socket) do
+    # To implement
+    {:noreply, socket}
+  end
+
+  def handle_event("add_to_cart", %{"id" => _id}, socket) do
+    # To implement
+    {:noreply, socket}
+  end
+
   def handle_event("delete", %{"id" => id}, socket) do
     product = Store.get_product!(id)
     {:ok, _} = Store.delete_product(product)
 
-    {:noreply, stream_delete(socket, :products, product)}
+    socket =
+      socket
+      |> stream_delete(:products, product)
+      |> reload_featured_products(product)
+
+    {:noreply, socket}
+  end
+
+  def reload_featured_products(socket, %{featured?: false}), do: socket
+
+  def reload_featured_products(socket, _) do
+    socket
+    |> assign(featured_products: Store.list_featured_products())
   end
 end
