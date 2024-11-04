@@ -28,6 +28,7 @@ defmodule DigistabStore.Store do
   def list_featured_products do
     Product
     |> where(featured?: true)
+    |> preload([:photos])
     |> Repo.all()
   end
 
@@ -42,9 +43,7 @@ defmodule DigistabStore.Store do
   def mark_as_featured(product) do
     product
     |> Product.changeset(%{featured?: true})
-    |> IO.inspect(label: "changeseted")
     |> Repo.update()
-    |> IO.inspect(label: "updated")
   end
 
   @doc """
@@ -61,7 +60,15 @@ defmodule DigistabStore.Store do
       ** (Ecto.NoResultsError)
 
   """
-  def get_product!(id), do: Repo.get!(Product, id)
+  def get_product!(id) do
+    Repo.get!(Product, id)
+    |> preload_product!()
+  end
+
+  def preload_product!(product) do
+    product
+    |> Repo.preload([:tags, :status, :photos, :category])
+  end
 
   @doc """
   Creates a product.

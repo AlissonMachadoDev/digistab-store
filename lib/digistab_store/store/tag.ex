@@ -1,5 +1,8 @@
 defmodule DigistabStore.Store.Tag do
-  alias DigistabStore.Store.TagType
+  alias DigistabStore.Store
+  alias Store.Product
+  alias Store.ProductTag
+  alias Store.TagType
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -9,6 +12,11 @@ defmodule DigistabStore.Store.Tag do
     field :name, :string
 
     belongs_to :tag_type, TagType
+
+    many_to_many :products, Product,
+      join_through: ProductTag,
+      on_replace: :delete,
+      join_keys: [tag_id: :id, product_id: :id]
 
     timestamps()
   end
