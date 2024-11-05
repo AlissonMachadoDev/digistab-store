@@ -1,8 +1,8 @@
 defmodule DigistabStoreWeb.Layouts.LayoutComponents do
   use Phoenix.Component
 
-  alias Phoenix.LiveView.JS
-  import DigistabStoreWeb.Gettext
+  # alias Phoenix.LiveView.JS
+  # import DigistabStoreWeb.Gettext
   import DigistabStoreWeb.CoreComponents
 
   @doc """
@@ -13,9 +13,13 @@ defmodule DigistabStoreWeb.Layouts.LayoutComponents do
 
   def navbar(assigns) do
     ~H"""
-    <header class="md:mx-10 md:h-20 z-10" x-id="['navbar']" x-data="{
+    <header
+      class="fixed top-0 left-10 right-10 z-10 bg-white"
+      x-id="['navbar']"
+      x-data="{
     categories: false
-    }">
+    }"
+    >
       <div class="flex md:flex-row flex-col md:h-20 items-center md:justify-between md:items-end border-b border-b-gray-300 shadow-md">
         <div class="flex items-center gap-4 mb-2"><img src="/images/plain_logo.svg" /></div>
 
@@ -62,10 +66,10 @@ defmodule DigistabStoreWeb.Layouts.LayoutComponents do
       >
         <a
           :for={category <- @categories}
-          href={"/categories/#{category}"}
+          href={"/categories/#{category.id}"}
           class="bg-violet-100 hover:bg-gray-200 md:w-48 px-2 py-1 md:text-left text-center rounded-sm border-b"
         >
-          Category <%= category %>
+          <%= category.name %>
         </a>
       </div>
     </header>
@@ -74,7 +78,7 @@ defmodule DigistabStoreWeb.Layouts.LayoutComponents do
 
   def footer(assigns) do
     ~H"""
-    <footer class="flex w-full fixed bottom-0">
+    <footer class="flex w-full bottom-0">
       <div class="flex flex-col w-full px-10 bg-gradient-to-t from-violet-400 to-white">
         <div class="flex w-full md:flex-row md:justify-between flex-col-reverse">
           <div class=" flex flex-row mb-8 md:ml-8">

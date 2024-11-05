@@ -87,6 +87,7 @@ defmodule DigistabStoreWeb do
       import DigistabStoreWeb.CoreComponents
       import DigistabStoreWeb.Layouts.LayoutComponents
       import DigistabStoreWeb.Gettext
+      import DigistabStoreWeb.ErrorHelpers
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

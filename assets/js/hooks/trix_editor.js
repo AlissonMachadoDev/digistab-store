@@ -1,10 +1,15 @@
+/**
+ * @type {Object.<string, import("phoenix_live_view").ViewHook>}
+ */
 import Trix from "trix";
 
 export const TrixEditor = {
   mounted() {
     const element = document.querySelector("trix-editor");
+    element.editor.loadHTML(element.getAttribute("value") || "");
     element.editor.element.addEventListener("trix-change", (e) => {
       this.el.dispatchEvent(new Event("change", { bubbles: true }));
+      this.pushEventTo(element, "validate", {type: "set-description", value: e.srcElement.innerHTML})
     });
     element.editor.element.addEventListener("trix-initialize", () => {
       element.editor.element.focus();

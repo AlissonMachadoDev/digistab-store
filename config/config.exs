@@ -61,6 +61,38 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :digistab_store,
+  bucket: System.get_env("AWS_BUCKET_NAME"),
+  region: System.get_env("AWS_REGION"),
+  access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
+  secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
+
+config :money,
+  # this allows you to do Money.new(100)
+  default_currency: :BRL,
+  # change the default thousands separator for Money.to_string
+  separator: ".",
+  # change the default decimal delimiter for Money.to_string
+  delimiter: ",",
+  # don’t display the currency symbol in Money.to_string
+  symbol: false,
+  # position the symbol
+  symbol_on_right: false,
+  # add a space between symbol and number
+  symbol_space: false,
+  # display units after the delimiter
+  fractional_unit: true,
+  # don’t display the insignificant zeros or the delimiter
+  strip_insignificant_zeros: false,
+  # add the currency code after the number
+  code: false,
+  # display the minus sign before the currency symbol for Money.to_string
+  minus_sign_first: true,
+  # don't display the delimiter or fractional units if the fractional units are only insignificant zeros
+  strip_insignificant_fractional_unit: false
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
+
+import_config "dev.secret.exs"

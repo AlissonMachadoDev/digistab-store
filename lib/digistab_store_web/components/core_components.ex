@@ -15,9 +15,9 @@ defmodule DigistabStoreWeb.CoreComponents do
   Icons are provided by [heroicons](https://heroicons.com). See `icon/1` for usage.
   """
   use Phoenix.Component
+  use Gettext, backend: DigistabStoreWeb.Gettext
 
   alias Phoenix.LiveView.JS
-  import DigistabStoreWeb.Gettext
 
   @doc """
   Renders a modal.
@@ -202,11 +202,11 @@ defmodule DigistabStoreWeb.CoreComponents do
   def simple_form(assigns) do
     ~H"""
     <.form :let={f} for={@for} as={@as} {@rest}>
-      <div class="mt-10 space-y-8 bg-white">
+      <div class="m-2 space-y-8 bg-white p-2 rounded-md shadow-sm">
         <%= render_slot(@inner_block, f) %>
-        <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
-          <%= render_slot(action, f) %>
-        </div>
+      </div>
+      <div :for={action <- @actions} class="mt-4 flex items-center justify-center gap-6">
+        <%= render_slot(action, f) %>
       </div>
     </.form>
     """
@@ -231,7 +231,7 @@ defmodule DigistabStoreWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3",
+        "phx-submit-loading:opacity-75 rounded-lg py-2 px-3",
         "text-sm font-semibold leading-6 text-white active:text-white/80",
         @class
       ]}
@@ -392,11 +392,12 @@ defmodule DigistabStoreWeb.CoreComponents do
   Renders a label.
   """
   attr :for, :string, default: nil
+  attr :weight, :string, default: "font-semibold"
   slot :inner_block, required: true
 
   def label(assigns) do
     ~H"""
-    <label for={@for} class="block text-sm font-semibold leading-6 text-zinc-800">
+    <label for={@for} class={["block text-sm leading-6 text-zinc-800 ", @weight]}>
       <%= render_slot(@inner_block) %>
     </label>
     """
@@ -506,7 +507,7 @@ defmodule DigistabStoreWeb.CoreComponents do
                 <span class="absolute -inset-y-px -right-4 left-0 group-hover:bg-zinc-50 sm:rounded-r-xl" />
                 <span
                   :for={action <- @action}
-                  class="relative ml-4 font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+                  class="relative ml-4 font-semibold leading-6 hover:text-violet-200"
                 >
                   <%= render_slot(action, @row_item.(row)) %>
                 </span>
