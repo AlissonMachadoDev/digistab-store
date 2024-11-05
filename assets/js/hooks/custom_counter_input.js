@@ -12,7 +12,6 @@ export const CustomCounterInput = {
             let value = Number(target.value);
             value--;
             target.value = value;
-            console.log(value)
             if (value <= 0) {
                 btn.setAttribute("disabled", "disabled");
             } 

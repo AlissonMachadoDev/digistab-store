@@ -9,6 +9,11 @@ defmodule DigistabStore.Store.Product do
   alias Store.ProductTag
   alias Store.Tag
 
+  @required [:name, :price, :promotional_price, :description, :category_id, :status_id]
+  @optional [:stock, :featured?, :release_date]
+
+  @max_photos 5
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "products" do
@@ -38,41 +43,83 @@ defmodule DigistabStore.Store.Product do
 
   @doc false
   def changeset(product, attrs) do
-    IO.inspect(product: product, attrs: attrs)
-
     product
-    |> cast(attrs, [
-      :name,
-      :price,
-      :promotional_price,
-      :description,
-      :stock,
-      :status_id,
-      :category_id,
-      :featured?
-    ])
-    |> validate_required([:name, :price, :promotional_price, :description])
-    |> validate_number(:stock, greater_than_or_equal_to: 0)
+    |> cast(attrs, @required ++ @optional)
+    |> validate_required(@required)
+    |> validate_length(:name, min: 3, max: 255)
+    |> validate_length(:description, min: 10)
+    |> validate_prices()
+    |> validate_stock()
+    |> validate_status()
+    |> validate_category()
+    |> validate_photos()
+    |> validate_tags()
     |> change_photos(attrs["photos"] || attrs[:photos])
-    |> validate_number(:stock, greater_than_or_equal_to: 0)
     |> change_tags(attrs["tags"] || attrs[:tags] || [])
   end
 
-  def change_photos(changeset, []), do: changeset
+  def change_photos(%Ecto.Changeset{} = changeset, []), do: changeset
 
-  def change_photos(changeset, photos) when is_list(photos) do
+  def change_photos(%Ecto.Changeset{} = changeset, photos) when is_list(photos) do
     changeset
     |> cast_assoc(:photos, with: &ProductPhoto.changeset/2)
   end
 
-  def change_photos(changeset, _), do: changeset
+  def change_photos(%Ecto.Changeset{} = changeset, _), do: changeset
 
-  def change_tags(changeset, []), do: changeset
+  def change_tags(%Ecto.Changeset{} = changeset, []), do: changeset
 
-  def change_tags(changeset, tags) when is_list(tags) do
+  def change_tags(%Ecto.Changeset{} = changeset, tags) when is_list(tags) do
     changeset
     |> put_assoc(:tags, tags)
   end
 
-  def change_tags(changeset, _), do: changeset
+  def change_tags(%Ecto.Changeset{} = changeset, _), do: changeset
+
+
+  def validate_prices(%Ecto.Changeset{} = changeset) do
+    changeset
+    |> validate_number(:price, greater_than: 0)
+    |> validate_number(:promotional_price, greater_than_or_equal_to: 0)
+    |> validate_promotional_price()
+  end
+
+  def validate_stock(%Ecto.Changeset{} = changeset) do
+    changeset
+    |> validate_number(:stock, greater_than_or_equal_to: 0)
+  end
+
+  def validate_status(%Ecto.Changeset{} = changeset) do
+    changeset
+    |> validate_required([:status_id])
+  end
+
+  def validate_category(%Ecto.Changeset{} = changeset) do
+    changeset
+    |> validate_required([:category_id])
+  end
+
+  def validate_photos(%Ecto.Changeset{} = changeset) do
+    changeset
+    |> validate_max_photos()
+  end
+
+  defp validate_promotional_price(%Ecto.Changeset{} = changeset) do
+    price = get_field(changeset, :price)
+    promo_price = get_field(changeset, :promotional_price)
+
+    with true <- not is_nil(price) and not is_nil(promo_price),
+         true <- promo_price < price do
+      changeset
+    else
+      false ->
+        add_error(changeset, :promotional_price, "invalid promotional price")
+    end
+  end
+
+  defp validate_max_photos(%Ecto.Changeset{} = changeset) do
+    photos = get_field(changeset, :photos) || []
+    if length(photos) <= @max_photos, do: changeset,
+    else: add_error(changeset, :photos, "maximum #{@max_photos} photos allowed")
+  end
 end

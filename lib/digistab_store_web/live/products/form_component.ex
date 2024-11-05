@@ -307,7 +307,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
         socket,
         :product,
         %{product | description: description}
-        |> IO.inspect(label: "description")
       )
 
     {:noreply, socket}
@@ -387,7 +386,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
       socket.assigns.product
       |> Map.put(:photos, put_photos_url(socket, %{}))
       |> Map.drop([:__meta__, :__struct__])
-      |> IO.inspect()
 
     save_product(socket, socket.assigns.action, product_params)
   end
@@ -465,7 +463,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     case Store.create_product(product_params) do
       {:ok, product} ->
         notify_parent({:saved, product |> Store.preload_product!()})
-        |> IO.inspect(label: "notify")
 
         {:noreply,
          socket
@@ -474,7 +471,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign_form(socket, changeset)}
-        |> IO.inspect(label: "error")
     end
   end
 
