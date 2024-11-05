@@ -10,7 +10,7 @@ defmodule DigistabStore.Store.Product do
   alias Store.Tag
 
   @required [:name, :price, :promotional_price, :description, :category_id, :status_id]
-  @optional [:stock, :featured?, :release_date]
+  @optional [:stock, :featured?] #, :release_date
 
   @max_photos 5
 
@@ -35,6 +35,7 @@ defmodule DigistabStore.Store.Product do
     many_to_many :tags, Tag,
       join_through: ProductTag,
       on_replace: :delete,
+      on_delete: :delete_all,
       unique: true,
       join_keys: [product_id: :id, tag_id: :id]
 
