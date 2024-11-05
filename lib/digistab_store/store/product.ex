@@ -53,7 +53,6 @@ defmodule DigistabStore.Store.Product do
     |> validate_status()
     |> validate_category()
     |> validate_photos()
-    |> validate_tags()
     |> change_photos(attrs["photos"] || attrs[:photos])
     |> change_tags(attrs["tags"] || attrs[:tags] || [])
   end
