@@ -1,6 +1,7 @@
 defmodule DigistabStoreWeb.Components.ProductCard do
   use Phoenix.Component
   import DigistabStoreWeb.CoreComponents
+  import DigistabStoreWeb.Products.PriceComponent
 
   attr :product, :map, required: true
 
@@ -29,14 +30,8 @@ defmodule DigistabStoreWeb.Components.ProductCard do
         </h3>
 
         <div class="space-y-2">
-          <div class="flex items-baseline space-x-2">
-            <span class="text-gray-400 line-through text-sm">
-              R$ <%= format_price(@product.price) %>
-            </span>
-            <span class="text-purple-600 text-2xl font-bold">
-              R$ <%= format_price(@product.promotional_price) %>
-            </span>
-          </div>
+                  <.product_price price={@product.price} promotional_price={@product.promotional_price} />
+
 
           <%= if @product.stock > 0 do %>
             <button
@@ -58,10 +53,4 @@ defmodule DigistabStoreWeb.Components.ProductCard do
     """
   end
 
-  defp format_price(price) do
-    price
-    |> Decimal.new()
-    |> Decimal.div(100)
-    |> Decimal.to_string(:normal)
-  end
 end

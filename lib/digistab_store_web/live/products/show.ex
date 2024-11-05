@@ -1,6 +1,8 @@
 defmodule DigistabStoreWeb.ProductLive.Show do
   use DigistabStoreWeb, :live_view
 
+  import DigistabStoreWeb.Products.PriceComponent
+
   alias DigistabStore.Store
 
   @impl true

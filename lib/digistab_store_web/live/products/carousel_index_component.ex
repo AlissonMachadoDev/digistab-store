@@ -1,6 +1,7 @@
 defmodule DigistabStoreWeb.ProductCarousel do
   use Phoenix.Component
   import DigistabStoreWeb.CoreComponents
+  import DigistabStoreWeb.Products.PriceComponent
 
   def featured_carousel(assigns) do
     ~H"""
@@ -91,14 +92,8 @@ defmodule DigistabStoreWeb.ProductCarousel do
               </div>
               <h3 class="font-medium text-gray-900 mb-2"><%= product.name %></h3>
               <div class="flex items-center justify-between">
-                <div>
-                  <span class="text-sm text-gray-500 line-through">
-                    R$ <%= format_price(product.price) %>
-                  </span>
-                  <span class="text-lg font-bold text-purple-600 ml-2">
-                    R$ <%= format_price(product.promotional_price) %>
-                  </span>
-                </div>
+
+                  <.product_price price={product.price} promotional_price={product.promotional_price} />
                 <button
                   phx-click="add_to_cart"
                   phx-value-id={product.id}
@@ -128,15 +123,7 @@ defmodule DigistabStoreWeb.ProductCarousel do
                   <%= Enum.at(@featured_products, index + 1).name %>
                 </h3>
                 <div class="flex items-center justify-between">
-                  <div>
-                    <span class="text-sm text-gray-500 line-through">
-                      R$ <%= Enum.at(@featured_products, index + 1).price |> format_price() %>
-                    </span>
-                    <span class="text-lg font-bold text-purple-600 ml-2">
-                      R$ <%= Enum.at(@featured_products, index + 1).promotional_price
-                      |> format_price() %>
-                    </span>
-                  </div>
+                <.product_price price={Enum.at(@featured_products, index + 1).price} promotional_price={Enum.at(@featured_products, index + 1).promotional_price} />
                   <button
                     phx-click="add_to_cart"
                     phx-value-id={Enum.at(@featured_products, index + 1).id}
@@ -166,12 +153,5 @@ defmodule DigistabStoreWeb.ProductCarousel do
       </div>
     </div>
     """
-  end
-
-  defp format_price(price) do
-    price
-    |> Decimal.new()
-    |> Decimal.div(100)
-    |> Decimal.to_string(:normal)
   end
 end

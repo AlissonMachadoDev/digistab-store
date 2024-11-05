@@ -32,15 +32,8 @@
             <%= @product.status.name %>
           </div>
         </div>
-
-        <div class="mt-4 flex justify-end ">
-          <span class="text-gray-400 line-through text-lg">
-            R$ <%= format_price(@product.price) %>
-          </span>
-          <span class="ml-2 text-3xl font-bold text-violet-600">
-            R$ <%= format_price(@product.promotional_price) %>
-          </span>
-        </div>
+        
+        <.product_price price={@product.price} promotional_price={@product.promotional_price} />
 
         <div class="mt-6 prose prose-violet">
           <%= raw(@product.description) %>
