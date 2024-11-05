@@ -165,7 +165,7 @@ products = [
     description:
       "Unisex Style T-Shirt for the best fit, feel and durability. True to size with a standard fit.",
     price: 2000,
-    promotional_price: 2400,
+    promotional_price: 1900,
     stock: 100,
     status_id: Enum.at(status_entries, 3).id,
     # Clothing
@@ -197,7 +197,7 @@ products = [
     name: "Modern Web Development Book",
     description: "Comprehensive guide to modenr web development practices and technologies",
     price: 4000,
-    promotional_price: 4400,
+    promotional_price: 1700,
     stock: 30,
     status_id: Enum.at(status_entries, 0).id,
     # Books
