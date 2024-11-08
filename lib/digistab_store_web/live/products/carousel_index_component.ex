@@ -92,8 +92,7 @@ defmodule DigistabStoreWeb.ProductCarousel do
               </div>
               <h3 class="font-medium text-gray-900 mb-2"><%= product.name %></h3>
               <div class="flex items-center justify-between">
-
-                  <.product_price price={product.price} promotional_price={product.promotional_price} />
+                <.product_price price={product.price} promotional_price={product.promotional_price} />
                 <button
                   phx-click="add_to_cart"
                   phx-value-id={product.id}
@@ -123,7 +122,10 @@ defmodule DigistabStoreWeb.ProductCarousel do
                   <%= Enum.at(@featured_products, index + 1).name %>
                 </h3>
                 <div class="flex items-center justify-between">
-                <.product_price price={Enum.at(@featured_products, index + 1).price} promotional_price={Enum.at(@featured_products, index + 1).promotional_price} />
+                  <.product_price
+                    price={Enum.at(@featured_products, index + 1).price}
+                    promotional_price={Enum.at(@featured_products, index + 1).promotional_price}
+                  />
                   <button
                     phx-click="add_to_cart"
                     phx-value-id={Enum.at(@featured_products, index + 1).id}

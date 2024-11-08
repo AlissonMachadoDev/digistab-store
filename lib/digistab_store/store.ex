@@ -1,15 +1,45 @@
 defmodule DigistabStore.Store do
-  @moduledoc """
-  The Store context.
-  """
+@moduledoc """
+The Store context handles all e-commerce functionality for the DigistabStore application.
+
+## Architecture
+
+This context is the core business logic layer, sitting between the web interface
+and the database. It handles with all product-related operations and enforces
+business rules through the data that came from the front.
+
+## Key Components
+
+* Products - Core entity representing sellable items
+* Categories - Hierarchical organization of products
+* Tags - Flexible labeling system for product attributes
+* Status - Product availability states
+* Photos - Product image management
+
+## Current Business Rules (Please, update this when something changes)
+
+* Products can have up to 5 photos
+* Promotional price must be lower than regular price, in case that it's 0, it's considered the regular price
+* Products must belong to exactly one category
+* Products must have at least one status
+* Featured products can be as featured, that it makes them be highlighted in the store frontend, the rest is considered as not featured and are * displayed in the default sections
+"""
 
   import Ecto.Query, warn: false
   alias DigistabStore.Repo
 
+  alias DigistabStore.Store.Category
   alias DigistabStore.Store.Product
+  alias DigistabStore.Store.ProductTag
+  alias DigistabStore.Store.Status
+  alias DigistabStore.Store.TagType
+  alias DigistabStore.Store.Tag
 
   @doc """
-  Returns the list of products.
+  Returns a list of all the products.
+
+  It loads associated data including status, category, and photos.
+  the results are ordered by insertion date.
 
   ## Examples
 
@@ -17,6 +47,7 @@ defmodule DigistabStore.Store do
       [%Product{}, ...]
 
   """
+  @spec list_products() :: [Product.t()]
   def list_products do
     Product
     |> preload([:status, :category, :photos])
@@ -24,7 +55,19 @@ defmodule DigistabStore.Store do
     |> Repo.all()
   end
 
-  # Buscar produtos featured
+  @doc """
+  Returns a list of featured products.
+
+  Featured products are those marked with featured?: true and are
+  typically displayed in the store's carousel or highlighted sections.
+
+  ## Examples
+
+      iex> list_featured_products()
+      [%Product{featured?: true}, ...]
+
+  """
+  @spec list_featured_products() :: [Product.t()]
   def list_featured_products do
     Product
     |> where(featured?: true)
@@ -32,15 +75,35 @@ defmodule DigistabStore.Store do
     |> Repo.all()
   end
 
-  # Buscar produtos not featured
+  @doc """
+  Returns a list of not featured products.
+
+  These products are those marked with featured?: false and
+  typically displayed the default sections of the store.
+
+  ## Examples
+
+      iex> list_other_products()
+      [%Product{featured?: false}, ...]
+
+  """
+  @spec list_other_products() :: [Product.t()]
   def list_other_products do
     Product
     |> where(featured?: false)
     |> Repo.all()
   end
 
-  # Marcar produto como featured
-  def mark_as_featured(product) do
+  @doc """
+  Updates a product setting the featured option to true.
+
+  ## Examples
+
+      iex> mark_as_featured(product)
+      {:ok, %Product{featured?: true}}
+  """
+  @spec mark_as_featured(Product.t()) :: {:ok, Product.t()} | {:error, Ecto.Changeset.t()}
+  def mark_as_featured(%Product{} = product) do
     product
     |> Product.changeset(%{featured?: true})
     |> Repo.update()
@@ -60,12 +123,23 @@ defmodule DigistabStore.Store do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_product!(binary()) :: Product.t() | no_return()
   def get_product!(id) do
     Repo.get!(Product, id)
     |> preload_product!()
   end
 
-  def preload_product!(product) do
+  @doc """
+   Preload the default fields from the product.
+
+  ## Examples
+
+      iex> preload_product!(product)
+      %Product{photos: [...], tags: [...], status: %Status{}, category: %Category{}}
+
+  """
+  @spec preload_product!(Product.t()) :: Product.t() | no_return()
+  def preload_product!(%Product{} = product) do
     product
     |> Repo.preload([:tags, :status, :photos, :category])
   end
@@ -82,6 +156,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_product(map()) :: {:ok, Product.t()} | {:error, Ecto.Changeset.t()}
   def create_product(attrs \\ %{}) do
     %Product{}
     |> Product.changeset(attrs)
@@ -100,6 +175,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_product(Product.t(), map()) :: {:ok, Product.t()} | {:error, Ecto.Changeset.t()}
   def update_product(%Product{} = product, attrs) do
     product
     |> Product.changeset(attrs)
@@ -118,6 +194,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_product(Product.t()) :: {:ok, Product.t()} | {:error, Ecto.Changeset.t()}
   def delete_product(%Product{} = product) do
     Repo.delete(product)
   end
@@ -131,13 +208,13 @@ defmodule DigistabStore.Store do
       %Ecto.Changeset{data: %Product{}}
 
   """
+  @spec change_product(Product.t(), map()) :: Ecto.Changeset.t()
   def change_product(%Product{} = product, attrs \\ %{}) do
     product
     |> Repo.preload([:status, :category])
     |> Product.changeset(attrs)
   end
 
-  alias DigistabStore.Store.Status
 
   @doc """
   Returns the list of status_collection.
@@ -148,6 +225,7 @@ defmodule DigistabStore.Store do
       [%Status{}, ...]
 
   """
+  @spec list_status_collection() :: [Status.t()]
   def list_status_collection do
     Repo.all(Status)
   end
@@ -166,6 +244,7 @@ defmodule DigistabStore.Store do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_status!(binary()) :: Status.t() | no_return()
   def get_status!(id), do: Repo.get!(Status, id)
 
   @doc """
@@ -180,6 +259,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_status(map()) :: {:ok, Status.t()} | {:error, Ecto.Changeset.t()}
   def create_status(attrs \\ %{}) do
     %Status{}
     |> Status.changeset(attrs)
@@ -198,6 +278,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_status(Status.t(), map()) :: {:ok, Status.t()} | {:error, Ecto.Changeset.t()}
   def update_status(%Status{} = status, attrs) do
     status
     |> Status.changeset(attrs)
@@ -216,6 +297,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_status(Status.t()) :: {:ok, Status.t()} | {:error, Ecto.Changeset.t()}
   def delete_status(%Status{} = status) do
     Repo.delete(status)
   end
@@ -229,11 +311,11 @@ defmodule DigistabStore.Store do
       %Ecto.Changeset{data: %Status{}}
 
   """
+  @spec change_status(Status.t(), map()) :: Ecto.Changeset.t()
   def change_status(%Status{} = status, attrs \\ %{}) do
     Status.changeset(status, attrs)
   end
 
-  alias DigistabStore.Store.Category
 
   @doc """
   Returns the list of categories.
@@ -244,6 +326,7 @@ defmodule DigistabStore.Store do
       [%Category{}, ...]
 
   """
+  @spec list_categories() :: [Category.t()]
   def list_categories do
     Repo.all(Category)
   end
@@ -262,6 +345,7 @@ defmodule DigistabStore.Store do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_category!(binary()) :: Category.t() | no_return()
   def get_category!(id), do: Repo.get!(Category, id)
 
   @doc """
@@ -276,6 +360,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_category(map()) :: {:ok, Category.t()} | {:error, Ecto.Changeset.t()}
   def create_category(attrs \\ %{}) do
     %Category{}
     |> Category.changeset(attrs)
@@ -294,6 +379,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_category(Category.t(), map()) :: {:ok, Category.t()} | {:error, Ecto.Changeset.t()}
   def update_category(%Category{} = category, attrs) do
     category
     |> Category.changeset(attrs)
@@ -312,6 +398,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_category(Category.t()) :: {:ok, Category.t()} | {:error, Ecto.Changeset.t()}
   def delete_category(%Category{} = category) do
     Repo.delete(category)
   end
@@ -325,11 +412,11 @@ defmodule DigistabStore.Store do
       %Ecto.Changeset{data: %Category{}}
 
   """
+  @spec change_category(Category.t(), map()) :: Ecto.Changeset.t()
   def change_category(%Category{} = category, attrs \\ %{}) do
     Category.changeset(category, attrs)
   end
 
-  alias DigistabStore.Store.TagType
 
   @doc """
   Returns the list of tag_types.
@@ -340,6 +427,7 @@ defmodule DigistabStore.Store do
       [%TagType{}, ...]
 
   """
+  @spec list_tag_types() :: [TagType.t()]
   def list_tag_types do
     Repo.all(TagType)
   end
@@ -358,6 +446,7 @@ defmodule DigistabStore.Store do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_tag_type!(binary()) :: TagType.t() | no_return()
   def get_tag_type!(id), do: Repo.get!(TagType, id)
 
   @doc """
@@ -372,6 +461,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_tag_type(map()) :: {:ok, TagType.t()} | {:error, Ecto.Changeset.t()}
   def create_tag_type(attrs \\ %{}) do
     %TagType{}
     |> TagType.changeset(attrs)
@@ -390,6 +480,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_tag_type(TagType.t(), map()) :: {:ok, TagType.t()} | {:error, Ecto.Changeset.t()}
   def update_tag_type(%TagType{} = tag_type, attrs) do
     tag_type
     |> TagType.changeset(attrs)
@@ -408,6 +499,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_tag_type(TagType.t()) :: {:ok, TagType.t()} | {:error, Ecto.Changeset.t()}
   def delete_tag_type(%TagType{} = tag_type) do
     Repo.delete(tag_type)
   end
@@ -421,11 +513,11 @@ defmodule DigistabStore.Store do
       %Ecto.Changeset{data: %TagType{}}
 
   """
+  @spec change_tag_type(TagType.t(), map()) :: Ecto.Changeset.t()
   def change_tag_type(%TagType{} = tag_type, attrs \\ %{}) do
     TagType.changeset(tag_type, attrs)
   end
 
-  alias DigistabStore.Store.Tag
 
   @doc """
   Returns the list of tags.
@@ -436,6 +528,7 @@ defmodule DigistabStore.Store do
       [%Tag{}, ...]
 
   """
+  @spec list_tags() :: [Tag.t()]
   def list_tags do
     Repo.all(Tag)
     |> Repo.preload(:tag_type)
@@ -455,6 +548,7 @@ defmodule DigistabStore.Store do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_tag!(binary()) :: Tag.t() | no_return()
   def get_tag!(id), do: Repo.get!(Tag, id)
 
   @doc """
@@ -469,6 +563,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_tag(map()) :: {:ok, Tag.t()} | {:error, Ecto.Changeset.t()}
   def create_tag(attrs \\ %{}) do
     %Tag{}
     |> Tag.changeset(attrs)
@@ -487,6 +582,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_tag(Tag.t(), map()) :: {:ok, Tag.t()} | {:error, Ecto.Changeset.t()}
   def update_tag(%Tag{} = tag, attrs) do
     tag
     |> Tag.changeset(attrs)
@@ -505,6 +601,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_tag(Tag.t()) :: {:ok, Tag.t()} | {:error, Ecto.Changeset.t()}
   def delete_tag(%Tag{} = tag) do
     Repo.delete(tag)
   end
@@ -518,11 +615,11 @@ defmodule DigistabStore.Store do
       %Ecto.Changeset{data: %Tag{}}
 
   """
+  @spec change_tag(Tag.t(), map()) :: Ecto.Changeset.t()
   def change_tag(%Tag{} = tag, attrs \\ %{}) do
     Tag.changeset(tag, attrs)
   end
 
-  alias DigistabStore.Store.ProductTag
 
   @doc """
   Returns the list of products_tags.
@@ -533,6 +630,7 @@ defmodule DigistabStore.Store do
       [%ProductTag{}, ...]
 
   """
+  @spec list_products_tags() :: [ProductTag.t()]
   def list_products_tags do
     Repo.all(ProductTag)
   end
@@ -551,6 +649,7 @@ defmodule DigistabStore.Store do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_product_tag!(binary()) :: ProductTag.t() | no_return()
   def get_product_tag!(id), do: Repo.get!(ProductTag, id)
 
   @doc """
@@ -565,6 +664,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_product_tag(map()) :: {:ok, ProductTag.t()} | {:error, Ecto.Changeset.t()}
   def create_product_tag(attrs \\ %{}) do
     %ProductTag{}
     |> ProductTag.changeset(attrs)
@@ -583,6 +683,8 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_product_tag(ProductTag.t(), map()) ::
+          {:ok, ProductTag.t()} | {:error, Ecto.Changeset.t()}
   def update_product_tag(%ProductTag{} = product_tag, attrs) do
     product_tag
     |> ProductTag.changeset(attrs)
@@ -601,6 +703,7 @@ defmodule DigistabStore.Store do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_product_tag(ProductTag.t()) :: {:ok, ProductTag.t()} | {:error, Ecto.Changeset.t()}
   def delete_product_tag(%ProductTag{} = product_tag) do
     Repo.delete(product_tag)
   end
@@ -614,103 +717,8 @@ defmodule DigistabStore.Store do
       %Ecto.Changeset{data: %ProductTag{}}
 
   """
+  @spec change_product_tag(ProductTag.t(), map()) :: Ecto.Changeset.t()
   def change_product_tag(%ProductTag{} = product_tag, attrs \\ %{}) do
     ProductTag.changeset(product_tag, attrs)
-  end
-
-  alias DigistabStore.Store.ProductCategory
-
-  @doc """
-  Returns the list of products_categories.
-
-  ## Examples
-
-      iex> list_products_categories()
-      [%ProductCategory{}, ...]
-
-  """
-  def list_products_categories do
-    Repo.all(ProductCategory)
-  end
-
-  @doc """
-  Gets a single product_category.
-
-  Raises `Ecto.NoResultsError` if the Product category does not exist.
-
-  ## Examples
-
-      iex> get_product_category!(123)
-      %ProductCategory{}
-
-      iex> get_product_category!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_product_category!(id), do: Repo.get!(ProductCategory, id)
-
-  @doc """
-  Creates a product_category.
-
-  ## Examples
-
-      iex> create_product_category(%{field: value})
-      {:ok, %ProductCategory{}}
-
-      iex> create_product_category(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_product_category(attrs \\ %{}) do
-    %ProductCategory{}
-    |> ProductCategory.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  @doc """
-  Updates a product_category.
-
-  ## Examples
-
-      iex> update_product_category(product_category, %{field: new_value})
-      {:ok, %ProductCategory{}}
-
-      iex> update_product_category(product_category, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_product_category(%ProductCategory{} = product_category, attrs) do
-    product_category
-    |> ProductCategory.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes a product_category.
-
-  ## Examples
-
-      iex> delete_product_category(product_category)
-      {:ok, %ProductCategory{}}
-
-      iex> delete_product_category(product_category)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_product_category(%ProductCategory{} = product_category) do
-    Repo.delete(product_category)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking product_category changes.
-
-  ## Examples
-
-      iex> change_product_category(product_category)
-      %Ecto.Changeset{data: %ProductCategory{}}
-
-  """
-  def change_product_category(%ProductCategory{} = product_category, attrs \\ %{}) do
-    ProductCategory.changeset(product_category, attrs)
   end
 end

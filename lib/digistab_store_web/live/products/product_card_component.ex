@@ -1,4 +1,16 @@
 defmodule DigistabStoreWeb.Components.ProductCard do
+  @moduledoc """
+  Reusable product card component for index view.
+
+  Example:
+      <.product_card product={@product} />
+
+  NOTES:
+  - Always pass preloaded product
+  - Uses skeleton loading for images
+
+  #TODO: Verify about responsivity on mobile
+  """
   use Phoenix.Component
   import DigistabStoreWeb.CoreComponents
   import DigistabStoreWeb.Products.PriceComponent
@@ -30,8 +42,7 @@ defmodule DigistabStoreWeb.Components.ProductCard do
         </h3>
 
         <div class="space-y-2">
-                  <.product_price price={@product.price} promotional_price={@product.promotional_price} />
-
+          <.product_price price={@product.price} promotional_price={@product.promotional_price} />
 
           <%= if @product.stock > 0 do %>
             <button
@@ -52,5 +63,4 @@ defmodule DigistabStoreWeb.Components.ProductCard do
     </div>
     """
   end
-
 end
