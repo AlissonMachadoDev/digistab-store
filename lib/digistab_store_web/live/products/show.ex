@@ -24,10 +24,22 @@ defmodule DigistabStoreWeb.ProductLive.Show do
 
   @impl true
   def handle_params(%{"id" => id}, _, socket) do
+    product = Store.get_product!(id)
+
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
-     |> assign(:product, Store.get_product!(id))}
+     |> assign(:product, product)
+     |> assign(:current_photo, List.first(product.photos))}
+  end
+
+  def handle_event(
+        "change-photo",
+        %{"position" => photo_position},
+        %{assigns: %{product: product}} = socket
+      ) do
+    photo = Enum.at(product.photos, String.to_integer(photo_position))
+    {:noreply, assign(socket, :current_photo, photo)}
   end
 
   defp page_title(:show), do: "Show Product"
