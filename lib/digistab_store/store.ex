@@ -1,29 +1,29 @@
 defmodule DigistabStore.Store do
-@moduledoc """
-The Store context handles all e-commerce functionality for the DigistabStore application.
+  @moduledoc """
+  The Store context handles all e-commerce functionality for the DigistabStore application.
 
-## Architecture
+  ## Architecture
 
-This context is the core business logic layer, sitting between the web interface
-and the database. It handles with all product-related operations and enforces
-business rules through the data that came from the front.
+  This context is the core business logic layer, sitting between the web interface
+  and the database. It handles with all product-related operations and enforces
+  business rules through the data that came from the front.
 
-## Key Components
+  ## Key Components
 
-* Products - Core entity representing sellable items
-* Categories - Hierarchical organization of products
-* Tags - Flexible labeling system for product attributes
-* Status - Product availability states
-* Photos - Product image management
+  * Products - Core entity representing sellable items
+  * Categories - Hierarchical organization of products
+  * Tags - Flexible labeling system for product attributes
+  * Status - Product availability states
+  * Photos - Product image management
 
-## Current Business Rules (Please, update this when something changes)
+  ## Current Business Rules (Please, update this when something changes)
 
-* Products can have up to 5 photos
-* Promotional price must be lower than regular price, in case that it's 0, it's considered the regular price
-* Products must belong to exactly one category
-* Products must have at least one status
-* Featured products can be as featured, that it makes them be highlighted in the store frontend, the rest is considered as not featured and are * displayed in the default sections
-"""
+  * Products can have up to 5 photos
+  * Promotional price must be lower than regular price, in case that it's 0, it's considered the regular price
+  * Products must belong to exactly one category
+  * Products must have at least one status
+  * Featured products can be as featured, that it makes them be highlighted in the store frontend, the rest is considered as not featured and are * displayed in the default sections
+  """
 
   import Ecto.Query, warn: false
   alias DigistabStore.Repo
@@ -215,7 +215,6 @@ business rules through the data that came from the front.
     |> Product.changeset(attrs)
   end
 
-
   @doc """
   Returns the list of status_collection.
 
@@ -315,7 +314,6 @@ business rules through the data that came from the front.
   def change_status(%Status{} = status, attrs \\ %{}) do
     Status.changeset(status, attrs)
   end
-
 
   @doc """
   Returns the list of categories.
@@ -417,7 +415,6 @@ business rules through the data that came from the front.
     Category.changeset(category, attrs)
   end
 
-
   @doc """
   Returns the list of tag_types.
 
@@ -517,7 +514,6 @@ business rules through the data that came from the front.
   def change_tag_type(%TagType{} = tag_type, attrs \\ %{}) do
     TagType.changeset(tag_type, attrs)
   end
-
 
   @doc """
   Returns the list of tags.
@@ -619,7 +615,6 @@ business rules through the data that came from the front.
   def change_tag(%Tag{} = tag, attrs \\ %{}) do
     Tag.changeset(tag, attrs)
   end
-
 
   @doc """
   Returns the list of products_tags.

@@ -1,4 +1,16 @@
 defmodule DigistabStoreWeb.ProductLive.Show do
+  @moduledoc """
+  ProductLive.Show
+
+  This module handles displaying a product's details in a live view.
+  It provides a dynamic interface for showing product information and updates automatically on changes.
+
+  Key Responsibilities:
+  - Loads product data when the component is mounted.
+  - Supports real-time updates to the product view.
+
+  Note: Designed for integration with LiveView, ensuring data is always current.
+  """
   use DigistabStoreWeb, :live_view
 
   import DigistabStoreWeb.Products.PriceComponent
@@ -28,9 +40,4 @@ defmodule DigistabStoreWeb.ProductLive.Show do
   def stock_color(stock) when stock > 10, do: "text-green-600 font-medium"
   def stock_color(stock) when stock > 0, do: "text-yellow-600 font-medium"
   def stock_color(_stock), do: "text-red-600 font-medium"
-
-  def can_edit?(_current_user) do
-    # TODO: Implement proper authorization
-    true
-  end
 end

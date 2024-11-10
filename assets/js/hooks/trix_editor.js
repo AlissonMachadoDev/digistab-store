@@ -1,5 +1,13 @@
 /**
  * @type {Object.<string, import("phoenix_live_view").ViewHook>}
+ *
+ * TrixEditor Hook
+ * 
+ * Connects a Trix rich text editor with your app.
+ * - Loads initial content and tracks changes.
+ * - Sends updates back to the server in real-time.
+ * 
+ * Great for forms needing formatted text input.
  */
 import Trix from "trix";
 

@@ -1,5 +1,14 @@
 /**
  * @type {Object.<string, import("phoenix_live_view").ViewHook>}
+ * 
+ * CustomCounterInput Hook
+ * 
+ * Manages a number input with increment/decrement buttons.
+ * - Prevents the value from going below zero.
+ * - Fires a `change` event whenever the value is updated.
+ * 
+ * To use, add `data-action="increment"` and `data-action="decrement"` attributes to your buttons.
+
  */
 
 export const CustomCounterInput = {

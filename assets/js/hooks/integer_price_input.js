@@ -1,5 +1,13 @@
 /**
  * @type {Object.<string, import("phoenix_live_view").ViewHook>}
+ * 
+ * IntegerPriceInput Hook
+ * 
+ * Formats input values as currency-like numbers.
+ * - Cleans up input to allow only numbers.
+ * - Resets to `0.00` if empty when losing focus.
+ * 
+ * Ideal for keeping prices consistently formatted.
  */
 export const IntegerPriceInput = {
   mounted() {
