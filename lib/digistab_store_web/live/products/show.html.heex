@@ -97,7 +97,7 @@
       <.icon name="hero-arrow-left-solid" class="w-4 h-4" /> Back to Products
     </.link>
 
-    <%= if true do %>
+    <%= if @is_admin do %>
       <div class="flex gap-4">
         <.link
           navigate={~p"/products/#{@product}/edit"}

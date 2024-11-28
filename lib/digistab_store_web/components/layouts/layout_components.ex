@@ -1,5 +1,6 @@
 defmodule DigistabStoreWeb.Layouts.LayoutComponents do
   use Phoenix.Component
+  use DigistabStoreWeb, :verified_routes
 
   # alias Phoenix.LiveView.JS
   # import DigistabStoreWeb.Gettext
@@ -21,7 +22,9 @@ defmodule DigistabStoreWeb.Layouts.LayoutComponents do
     }"
     >
       <div class="flex md:flex-row flex-col md:h-20 items-center md:justify-between md:items-end border-b border-b-gray-300 shadow-md">
-        <div class="flex items-center gap-4 mb-2"><img src="/images/plain_logo.svg" /></div>
+        <.link patch={~p"/products"} class="flex items-center gap-4 mb-2">
+          <img src="/images/plain_logo.svg" />
+        </.link>
 
         <div class="flex flex-row border-gray-200 space-x-2">
           <button class="flex flex-row px-4 py-1 space-x-1 text-violet-500 hover:bg-violet-500 hover:text-white hover:cursor-pointer ">

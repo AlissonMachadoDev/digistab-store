@@ -19,6 +19,10 @@ defmodule DigistabStoreWeb.ProductLive.Show do
 
   @impl true
   def mount(_params, _session, socket) do
+    socket =
+      socket
+      |> assign(:is_admin, true)
+
     {:ok, socket}
   end
 
@@ -33,6 +37,7 @@ defmodule DigistabStoreWeb.ProductLive.Show do
      |> assign(:current_photo, List.first(product.photos))}
   end
 
+  @impl true
   def handle_event(
         "change-photo",
         %{"position" => photo_position},
