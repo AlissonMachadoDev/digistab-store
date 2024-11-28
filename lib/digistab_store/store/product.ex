@@ -1,4 +1,27 @@
 defmodule DigistabStore.Store.Product do
+  @moduledoc """
+  Used to store and manage product information including pricing,
+  stock levels, and categorization. Products can be featured, have a rich HTML description and
+  have promotional prices.
+  """
+
+  @typedoc """
+  Product type with all main fields.
+
+  Fields:
+  - :id - Unique identifier
+  - :name - Product name
+  - :description - Detailed product description
+  - :price - Regular price in cents
+  - :promotional_price - Special price in cents
+  - :stock - Current inventory count
+  - :featured? - Whether product should be featured on the homepage
+  - :status - Current product status
+  - :category - Product category
+  - :photos - Associated product images
+  - :tags - Associated product tags
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -9,8 +32,22 @@ defmodule DigistabStore.Store.Product do
   alias Store.ProductTag
   alias Store.Tag
 
+  @type t :: %__MODULE__{
+          id: binary(),
+          name: String.t(),
+          description: String.t(),
+          price: integer(),
+          promotional_price: integer(),
+          stock: non_neg_integer(),
+          featured?: boolean(),
+          status: Status.t(),
+          category: Category.t(),
+          photos: [ProductPhoto.t()],
+          tags: [Tag.t()]
+        }
   @required [:name, :price, :promotional_price, :description, :category_id, :status_id]
-  @optional [:stock, :featured?] #, :release_date
+  # , :release_date
+  @optional [:stock, :featured?]
 
   @max_photos 5
 
@@ -58,6 +95,9 @@ defmodule DigistabStore.Store.Product do
     |> change_tags(attrs["tags"] || attrs[:tags] || [])
   end
 
+  @doc """
+  Changeset function to handle photo changes.
+  """
   def change_photos(%Ecto.Changeset{} = changeset, []), do: changeset
 
   def change_photos(%Ecto.Changeset{} = changeset, photos) when is_list(photos) do
@@ -76,7 +116,10 @@ defmodule DigistabStore.Store.Product do
 
   def change_tags(%Ecto.Changeset{} = changeset, _), do: changeset
 
-
+  @doc """
+  Validates product prices and promotional prices.
+  Makes sure promotional price is less than the regular price.
+  """
   def validate_prices(%Ecto.Changeset{} = changeset) do
     changeset
     |> validate_number(:price, greater_than: 0)
@@ -119,7 +162,9 @@ defmodule DigistabStore.Store.Product do
 
   defp validate_max_photos(%Ecto.Changeset{} = changeset) do
     photos = get_field(changeset, :photos) || []
-    if length(photos) <= @max_photos, do: changeset,
-    else: add_error(changeset, :photos, "maximum #{@max_photos} photos allowed")
+
+    if length(photos) <= @max_photos,
+      do: changeset,
+      else: add_error(changeset, :photos, "maximum #{@max_photos} photos allowed")
   end
 end

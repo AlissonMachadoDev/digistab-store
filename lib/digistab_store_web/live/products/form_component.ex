@@ -1,4 +1,17 @@
 defmodule DigistabStoreWeb.ProductLive.FormComponent do
+  @moduledoc """
+  LiveComponent for product form handling.
+
+  Provides a rich interface for product creation and editing with:
+  - Real-time validation
+  - Image upload with S3 integration
+  - Rich text description editor
+  - Tag management
+  - Price formatting
+  - Stock control
+
+
+  """
   use DigistabStoreWeb, :live_component
 
   import DigistabStoreWeb.ProductLive.ProductComponents
@@ -262,7 +275,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
         </div>
       </div>
       <label class="mt-auto" title={@entry.client_name}>
-        <%= format_filename(@entry.client_name) %>
+        <%= truncate_filename(@entry.client_name) %>
       </label>
       <div class="progress m-2 h-2 w-32 rounded-lg border bg-white shadow-lg">
         <div
@@ -414,6 +427,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     {:noreply, cancel_upload(socket, :photos, ref)}
   end
 
+  # Filters tags based on the search query and manages selected tags.
   defp search_tags(tags, selected_tags, tag_name) do
     [
       fetched_tags: Enum.filter(tags, &(&1.name =~ ~r/#{tag_name}/i)) -- selected_tags,
@@ -422,6 +436,8 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     ]
   end
 
+  # Handles S3 upload completion and associates photos with product.
+  # Manages unique photo URLs and main photo selection.
   defp put_photos_url(socket, _product) do
     {completed, []} = uploaded_entries(socket, :photos)
 
@@ -434,6 +450,9 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     end
   end
 
+  @doc """
+  Consumes the uploaded photo entries to mark them as processed and to clean up resources. This function is typically used after uploads have been successfully handled to perform any necessary cleanup or final processing.
+  """
   def consume_photos(socket, product) do
     consume_uploaded_entries(socket, :photos, fn _meta, _entry ->
       :ok
@@ -442,6 +461,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     {:ok, product}
   end
 
+  # Persists changes to a product based on the action (`:edit` or `:new`).
   defp save_product(socket, :edit, product_params) do
     product = Store.get_product!(socket.assigns.product.id)
 
@@ -480,6 +500,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
 
+  # Configures initial state for product creation or editing.
   defp initial_assigns(:new, _product) do
     status_collection = DigistabStore.Store.list_status_collection()
 
@@ -535,6 +556,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     ]
   end
 
+  # Validates stock input, converting it to an integer when necessary.
   defp validate_stock(attrs, stock) when is_integer(stock) do
     %{attrs | "stock" => stock}
   end
@@ -544,6 +566,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     |> Map.put("stock", String.to_integer(stock))
   end
 
+  # Ensures selected values for custom fields are valid based on predefined collections.
   defp validate_custom_select(attrs, field, collection, value) do
     field_value = Enum.find(collection, fn st -> st.name == value end)
 
@@ -551,6 +574,8 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     |> Map.put(field <> "_id", field_value.id)
   end
 
+  # Selects an item from a list based on the provided ID.
+  # If the ID is nil, returns the first item in the list.
   defp select_item(items, id) do
     if is_nil(id) do
       List.first(items)
@@ -559,8 +584,12 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     end
   end
 
+  @doc """
+  Checks if there are any ongoing uploads.
+  """
   def has_uploads?(uploads), do: length(uploads) > 0
 
+  # Determines the appropriate tailwind classes for the upload field based on its state.
   defp upload_field(true),
     do:
       "flex h-fit md:h-36 md:w-32 m-2 cursor-pointer rounded-md border-2 border-dashed border-gray-300 p-4 text-center"
@@ -569,7 +598,8 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     do:
       "flex h-36 w-full cursor-pointer rounded-md border-2 border-dashed border-gray-300 p-4 text-center"
 
-  defp format_filename(filename) do
+  # Truncates a filename if it exceeds a certain length.
+  defp truncate_filename(filename) do
     if String.length(filename) < 19 do
       filename
     else
@@ -581,6 +611,9 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     end
   end
 
+  # Prepares metadata needed for uploading files directly from the browser to S3.
+  # This function handles generating a presigned URL and setting up the required
+  # AWS fields for secure file uploads, as well as any necessary file restrictions.
   defp presign_upload(entry, socket) do
     uploads = socket.assigns.uploads
     key = "digistab_store/products/#{entry.client_name}"
@@ -603,6 +636,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     {:ok, meta, socket}
   end
 
+  # Converts field names to atom keys used internally.
   defp define_field("put-price"), do: "price"
   defp define_field("put-promo-price"), do: "promotional_price"
 end

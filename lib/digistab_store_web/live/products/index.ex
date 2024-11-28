@@ -1,4 +1,14 @@
 defmodule DigistabStoreWeb.ProductLive.Index do
+  @moduledoc """
+  LiveView for product listing and management.
+
+  This module handles:
+  - Display of product grid
+  - Featured products carousel
+  - Product search
+  - Product creation/editing through modal forms
+  - Real-time updates
+  """
   use DigistabStoreWeb, :live_view
 
   alias DigistabStore.Store
@@ -79,6 +89,10 @@ defmodule DigistabStoreWeb.ProductLive.Index do
     {:noreply, socket}
   end
 
+  @doc """
+    Selectively reloads featured products when a product's featured status changes.
+  Only triggers reload if the product is or was featured.
+  """
   def reload_featured_products(socket, %{featured?: false}), do: socket
 
   def reload_featured_products(socket, _) do

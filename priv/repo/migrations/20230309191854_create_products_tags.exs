@@ -1,6 +1,7 @@
 defmodule DigistabStore.Repo.Migrations.CreateProductsTags do
   use Ecto.Migration
 
+  # This migration was later removed by up() and down() in another migration. This is table is never used.
   def change do
     create table(:products_tags, primary_key: false) do
       add :id, :binary_id, primary_key: true
