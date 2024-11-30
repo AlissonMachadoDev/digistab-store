@@ -90,7 +90,3 @@ config :money,
   minus_sign_first: true,
   # don't display the delimiter or fractional units if the fractional units are only insignificant zeros
   strip_insignificant_fractional_unit: false
-
-# Import environment specific config. This must remain at the bottom
-# of this file so it overrides the configuration defined above.
-import_config "#{config_env()}.exs"
