@@ -6,6 +6,12 @@ echo "Fetching secrets from AWS Parameter Store..."
 DB_URL=$(aws ssm get-parameter --name "/digistab_store/prod/database_url" --with-decryption --query Parameter.Value --output text)
 KEY_BASE=$(aws ssm get-parameter --name "/digistab_store/prod/secret_key_base" --with-decryption --query Parameter.Value --output text)
 
+
+echo "Setting up directory permissions..."
+mkdir -p /opt/digistab_store/_build/prod/rel/digistab_store/tmp
+chown -R ubuntu:ubuntu /opt/digistab_store/_build/prod/rel/digistab_store/tmp
+chmod -R 755 /opt/digistab_store/_build/prod/rel/digistab_store/tmp
+
 echo "Creating systemd service file..."
 sudo tee /etc/systemd/system/digistab_store.service > /dev/null << EOL
 [Unit]
