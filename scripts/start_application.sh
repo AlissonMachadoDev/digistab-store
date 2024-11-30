@@ -8,9 +8,9 @@ KEY_BASE=$(aws ssm get-parameter --name "/digistab_store/prod/secret_key_base" -
 
 
 echo "Setting up directory permissions..."
-mkdir -p /opt/digistab_store/_build/prod/rel/digistab_store/tmp
-chown -R ubuntu:ubuntu /opt/digistab_store/_build/prod/rel/digistab_store/tmp
-chmod -R 755 /opt/digistab_store/_build/prod/rel/digistab_store/tmp
+sudo mkdir -p /opt/digistab_store/_build/prod/rel/digistab_store/tmp
+sudo chown -R ubuntu:ubuntu /opt/digistab_store/_build/prod/rel/digistab_store/tmp
+sudo chmod -R 755 /opt/digistab_store/_build/prod/rel/digistab_store/tmp
 
 echo "Creating systemd service file..."
 sudo tee /etc/systemd/system/digistab_store.service > /dev/null << EOL
@@ -19,7 +19,7 @@ Description=Digistab Store Phoenix Application
 After=network.target postgresql.service
 
 [Service]
-Type=forking
+Type=simple
 User=ubuntu
 Group=ubuntu
 WorkingDirectory=/opt/digistab_store
@@ -34,7 +34,7 @@ Environment=RELEASE_NAME=digistab_store
 Environment=DATABASE_URL=${DB_URL}
 Environment=SECRET_KEY_BASE=${KEY_BASE}
 
-ExecStart=/opt/digistab_store/_build/prod/rel/digistab_store/bin/digistab_store daemon
+ExecStart=/opt/digistab_store/_build/prod/rel/digistab_store/bin/digistab_store start
 ExecStop=/opt/digistab_store/_build/prod/rel/digistab_store/bin/digistab_store stop
 Restart=always
 RestartSec=5
@@ -43,7 +43,7 @@ RestartSec=5
 WantedBy=multi-user.target
 EOL
 
-echo "Setting proper permissions for service file..."
+echo "Setting proper permissions..."
 sudo chmod 644 /etc/systemd/system/digistab_store.service
 
 echo "Downloading RDS certificate if needed..."
