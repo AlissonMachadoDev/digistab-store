@@ -31,10 +31,17 @@ if config_env() == :prod do
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
   config :digistab_store, DigistabStore.Repo,
-    # ssl: true,
+    ssl: true,
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    socket_options: maybe_ipv6
+    socket_options: maybe_ipv6,
+    parameters: [
+      ssl_params: [
+        verify: :verify_peer,
+        cacertfile: "/etc/ssl/certs/rds-ca-global.pem",
+        server_name_indication: String.to_charlist(URI.parse(database_url).host || "")
+      ]
+    ]
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
