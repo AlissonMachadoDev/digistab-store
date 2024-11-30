@@ -82,6 +82,10 @@ fi
 cd /opt/digistab_store
 echo "Changed to directory: $(pwd)"
 
+wget https://s3.amazonaws.com/rebar3/rebar3 && chmod +x rebar3
+sudo mv rebar3 /usr/local/bin/
+rebar3 --version
+
 # Install hex and rebar
 echo "Installing hex and rebar..."
 mix local.hex --force
