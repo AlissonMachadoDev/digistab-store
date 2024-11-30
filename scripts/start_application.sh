@@ -59,7 +59,7 @@ if ! check_database_connection "$DB_URL"; then
 fi
 
 echo "Creating database if needed and running migrations..."
-mix ecto.setup
+/opt/digistab_store/_build/prod/rel/digistab_store/bin/digistab_store mix ecto.setup
 
 echo "Enabling and starting digistab_store service..."
 sudo systemctl enable digistab_store
