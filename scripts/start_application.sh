@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+source /opt/digistab_store/scripts/check_db.sh
 
 echo "Fetching secrets from AWS Parameter Store..."
 DB_URL=$(aws ssm get-parameter --name "/digistab_store/prod/database_url" --with-decryption --query Parameter.Value --output text)
@@ -50,7 +51,12 @@ sudo systemctl daemon-reload
 
 # Give some time for RDS to be fully available
 echo "Waiting for RDS to be ready..."
-sleep 10
+sleep 4
+
+if ! check_database_connection "$DB_URL"; then
+    echo "Cannot proceed with deployment - database is not accessible"
+    exit 1
+fi
 
 echo "Creating database if needed and running migrations..."
 DATABASE_URL="${DB_URL}" SECRET_KEY_BASE="${KEY_BASE}" /opt/digistab_store/_build/prod/rel/digistab_store/bin/digistab_store eval "DigistabStore.Release.migrate"
