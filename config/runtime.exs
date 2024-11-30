@@ -43,7 +43,7 @@ if config_env() == :prod do
       verify: :verify_peer,
       cacertfile: "/etc/ssl/certs/rds-ca-global.pem",
       server_name_indication: String.to_charlist(URI.parse(database_url).host || ""),
-      verify_fun: {&:ssl.verify_peer/3, nil}
+      versions: [:"tlsv1.2", :"tlsv1.3"]
     ]
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
