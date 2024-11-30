@@ -36,6 +36,8 @@ if config_env() == :prod do
     pool_size: 20,
     queue_target: 10_000,
     queue_interval: 10_000,
+    timeout: 60_000,
+    migration_timeout: 120_000,
     socket_options: maybe_ipv6,
     parameters: [
       ssl_params: [
