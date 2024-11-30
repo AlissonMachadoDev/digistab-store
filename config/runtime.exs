@@ -33,7 +33,9 @@ if config_env() == :prod do
   config :digistab_store, DigistabStore.Repo,
     ssl: true,
     url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    pool_size: 20,
+    queue_target: 10_000,
+    queue_interval: 10_000,
     socket_options: maybe_ipv6,
     parameters: [
       ssl_params: [
