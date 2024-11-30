@@ -15,13 +15,13 @@ defmodule DigistabStoreWeb.Layouts.LayoutComponents do
   def navbar(assigns) do
     ~H"""
     <header
-      class="fixed top-0 left-10 right-10 z-10 bg-white"
+      class="fixed top-0 left-10 right-10 z-20 bg-white"
       x-id="['navbar']"
       x-data="{
     categories: false
     }"
     >
-      <div class="flex md:flex-row flex-col md:h-20 items-center md:justify-between md:items-end border-b border-b-gray-300 shadow-md">
+      <div class="flex md:flex-row flex-col md:h-14 items-center md:justify-between md:items-end border-b border-b-gray-300 shadow-md">
         <.link patch={~p"/products"} class="flex items-center gap-4 mb-2">
           <img src="/images/plain_logo.svg" />
         </.link>
@@ -81,7 +81,7 @@ defmodule DigistabStoreWeb.Layouts.LayoutComponents do
 
   def footer(assigns) do
     ~H"""
-    <footer class="flex w-full bottom-0">
+    <footer class="flex w-full bottom-0 z-10">
       <div class="flex flex-col w-full px-10 bg-gradient-to-t from-violet-400 to-white">
         <div class="flex w-full md:flex-row md:justify-between flex-col-reverse">
           <div class=" flex flex-row mb-8 md:ml-8">
