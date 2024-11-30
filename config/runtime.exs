@@ -39,11 +39,16 @@ if config_env() == :prod do
     timeout: 60_000,
     migration_timeout: 120_000,
     socket_options: maybe_ipv6,
-    parameters: [
-      ssl_params: [
-        verify: :verify_peer,
-        cacertfile: "/etc/ssl/certs/rds-ca-global.pem",
-        server_name_indication: String.to_charlist(URI.parse(database_url).host || "")
+    ssl_opts: [
+      verify: :verify_peer,
+      cacertfile: "/etc/ssl/certs/rds-ca-global.pem",
+      server_name_indication: String.to_charlist(URI.parse(database_url).host || ""),
+      verify_fun: {
+        :ssl_verify_hostname.verify_fun(:check_hostname),
+        [{:check_hostname, String.to_charlist(URI.parse(database_url).host || "")}]
+      },
+      customize_hostname_check: [
+        match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
       ]
     ]
 
