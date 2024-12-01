@@ -95,6 +95,30 @@ defmodule DigistabStore.Store do
   end
 
   @doc """
+  Returns a list of products that fits on search term.
+
+  ## Examples
+
+      iex> list_other_products()
+      [%Product{}, ...]
+
+  """
+  @spec search_products(binary()) :: [Product.t()]
+  def search_products(product_name) do
+    # Just for User Experience
+    :timer.sleep(2000)
+    search_term = "%#{product_name}%"
+
+    from(p in Product,
+      where:
+        ilike(p.name, ^search_term) or
+          ilike(p.description, ^search_term),
+      preload: [:status, :category, :photos]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Updates a product setting the featured option to true.
 
   ## Examples

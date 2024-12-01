@@ -27,7 +27,8 @@ defmodule DigistabStoreWeb.ProductLive.Index do
     {:ok,
      assign(socket,
        query: "",
-       cart_count: 10
+       cart_count: 10,
+       loading: false
      )
      |> assign(:featured_products, featured_products)
      |> stream(:products, products)}
@@ -66,9 +67,33 @@ defmodule DigistabStoreWeb.ProductLive.Index do
     {:noreply, socket}
   end
 
+  def handle_info({:run_search, query}, socket) do
+    socket =
+      socket
+      |> stream(:products, Store.search_products(query), reset: true)
+      |> assign(:loading, false)
+
+    {:noreply, socket}
+  end
+
   @impl true
-  def handle_event("search", %{"search" => %{"query" => _query}}, socket) do
-    # To implement
+  def handle_event("search", %{"search" => %{"query" => ""}}, socket) do
+    socket =
+      socket
+      |> assign(featured_products: Store.list_featured_products())
+      |> stream(:products, Store.list_products(), reset: true)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("search", %{"search" => %{"query" => query}}, socket) do
+    send(self(), {:run_search, query})
+
+    socket =
+      socket
+      |> assign(featured_products: [], loading: true)
+      |> stream(:products, [], reset: true)
+
     {:noreply, socket}
   end
 
