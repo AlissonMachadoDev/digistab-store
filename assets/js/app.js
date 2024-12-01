@@ -32,6 +32,14 @@ import Uploaders from "./uploaders";
 window.Alpine = Alpine;
 Alpine.start()
 
+window.addEventListener("scroll-top", () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+});
+
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
