@@ -20,18 +20,7 @@ defmodule DigistabStoreWeb.ProductLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
-    featured_products = Store.list_featured_products()
-
-    products = Store.list_products()
-
-    {:ok,
-     assign(socket,
-       query: "",
-       cart_count: 10,
-       loading: false
-     )
-     |> assign(:featured_products, featured_products)
-     |> stream(:products, products)}
+    {:ok, default_assigns(socket)}
   end
 
   @impl true
@@ -39,22 +28,39 @@ defmodule DigistabStoreWeb.ProductLive.Index do
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
   end
 
+  defp apply_action(socket, :category, %{"id" => id}) do
+    send(self(), {:handle_category, id})
+    category = Store.get_category!(id)
+
+    socket
+    |> assign(
+      page_title: "#{category.name}",
+      default_section_name: "Products listed on '#{category.name}'",
+      featured_products: [],
+      loading: true,
+      current_action: :category
+    )
+    |> stream(:products, [], reset: true)
+  end
+
   defp apply_action(socket, :edit, %{"id" => id}) do
     socket
     |> assign(:page_title, "Edit Product")
+    |> assign(:current_action, :edit)
     |> assign(:product, Store.get_product!(id))
   end
 
   defp apply_action(socket, :new, _params) do
     socket
     |> assign(:page_title, "New Product")
+    |> assign(:current_action, :new)
     |> assign(:product, %Product{})
   end
 
   defp apply_action(socket, :index, _params) do
     socket
-    |> assign(:page_title, "Listing Products")
     |> assign(:product, nil)
+    |> default_assigns()
   end
 
   @impl true
@@ -71,7 +77,21 @@ defmodule DigistabStoreWeb.ProductLive.Index do
     socket =
       socket
       |> stream(:products, Store.search_products(query), reset: true)
-      |> assign(:loading, false)
+      |> assign(
+        loading: false,
+        default_section_name: "Found products by '#{query}'"
+      )
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:handle_category, id}, socket) do
+    :timer.sleep(2500)
+
+    socket =
+      socket
+      |> assign(loading: false)
+      |> stream(:products, Store.list_products_by_category(id), reset: true)
 
     {:noreply, socket}
   end
@@ -80,7 +100,11 @@ defmodule DigistabStoreWeb.ProductLive.Index do
   def handle_event("search", %{"search" => %{"query" => ""}}, socket) do
     socket =
       socket
-      |> assign(featured_products: Store.list_featured_products())
+      |> assign(
+        featured_products: Store.list_featured_products(),
+        default_section_name: "Other products",
+        current_action: :index
+      )
       |> stream(:products, Store.list_products(), reset: true)
 
     {:noreply, socket}
@@ -91,7 +115,7 @@ defmodule DigistabStoreWeb.ProductLive.Index do
 
     socket =
       socket
-      |> assign(featured_products: [], loading: true)
+      |> assign(featured_products: [], loading: true, current_action: :search)
       |> stream(:products, [], reset: true)
 
     {:noreply, socket}
@@ -123,5 +147,22 @@ defmodule DigistabStoreWeb.ProductLive.Index do
   def reload_featured_products(socket, _) do
     socket
     |> assign(featured_products: Store.list_featured_products())
+  end
+
+  defp default_assigns(socket) do
+    featured_products = Store.list_featured_products()
+
+    products = Store.list_products()
+
+    assign(socket,
+      query: "",
+      cart_count: 10,
+      default_section_name: "Other products",
+      page_title: "Listing Products",
+      loading: false,
+      current_action: :index
+    )
+    |> assign(:featured_products, featured_products)
+    |> stream(:products, products)
   end
 end

@@ -91,6 +91,7 @@ defmodule DigistabStore.Store do
   def list_other_products do
     Product
     |> where(featured?: false)
+    |> preload([:status, :category, :photos])
     |> Repo.all()
   end
 
@@ -115,6 +116,23 @@ defmodule DigistabStore.Store do
           ilike(p.description, ^search_term),
       preload: [:status, :category, :photos]
     )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns a list of products that belongs to a category.
+
+  ## Examples
+
+      iex> list_products_by_category()
+      [%Product{}, ...]
+
+  """
+  @spec list_products_by_category(binary()) :: [Product.t()]
+  def list_products_by_category(category_id) do
+    Product
+    |> where(category_id: ^category_id)
+    |> preload([:status, :category, :photos])
     |> Repo.all()
   end
 
