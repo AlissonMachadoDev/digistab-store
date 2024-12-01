@@ -1,14 +1,9 @@
 <div class="flex flex-row mt-8">
   <div name="search bar" class="flex w-2/3 mx-auto flex-row px-4">
-    <.header>
-      Listing Products
-      <:actions>
-        <.link patch={~p"/products/new"}>
-          <.button class="bg-zinc-900 hover:bg-zinc-700">New Product</.button>
-        </.link>
-      </:actions>
-    </.header>
-    <div class="w-full flex flex-row items-center justify-end">
+    <div class="w-full flex flex-row items-center justify-between ">
+      <.link patch={~p"/products/new"}>
+        <.button class="bg-zinc-900 hover:bg-zinc-700 mt-2">New Product</.button>
+      </.link>
       <.form
         :let={f}
         for={%{}}
@@ -30,7 +25,6 @@
           <.icon name="hero-magnifying-glass" class="h-6 w-6 text-gray-400 hover:text-violet-500" />
         </button>
       </.form>
-      <div></div>
     </div>
   </div>
 </div>
