@@ -1,6 +1,9 @@
-<div class="flex flex-row mt-8">
+<div class="flex flex-col mt-8">
   <div name="search bar" class="flex w-2/3 mx-auto flex-row px-4">
-    <div class="w-full flex flex-row items-center justify-between ">
+    <div
+      :if={@current_action == :index}
+      class="w-full flex flex-row items-center justify-between "
+    >
       <.link patch={~p"/products/new"}>
         <.button class="bg-zinc-900 hover:bg-zinc-700 mt-2">New Product</.button>
       </.link>
@@ -8,7 +11,6 @@
         :let={f}
         for={%{}}
         as={:search}
-        phx-change="search"
         phx-submit="search"
         class="relative flex items-center"
       >
@@ -20,6 +22,7 @@
           class="w-full px-4 py-3 bg-white rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 text-gray-600 text-lg"
           phx-debounce="300"
           autocomplete="off"
+          readonly={@loading}
         />
         <button type="submit" class="absolute right-3 p-1" aria-label="Search">
           <.icon name="hero-magnifying-glass" class="h-6 w-6 text-gray-400 hover:text-violet-500" />
@@ -27,18 +30,25 @@
       </.form>
     </div>
   </div>
+  <div :if={@loading} class="loader">Loading...</div>
 </div>
 <div class="flex flex-col md:flex-row mt-4 rounded-md">
   <div class="md:mx-auto w-full lg:w-2/3 responsive-box ">
     <div class="container mx-auto px-4">
       <!-- Featured Products -->
-      <section class="mb-12 bg-violet-50 shadow-sm p-4">
+      <section
+        :if={Enum.count(@featured_products) > 0 and !@loading}
+        class="mb-12 bg-violet-50 shadow-sm p-4"
+      >
         <h2 class="text-xl font-bold mb-6 text-center">DESTAQUES</h2>
         <.featured_carousel featured_products={@featured_products} />
       </section>
       <!-- Other Products -->
-      <section class="mb-12 bg-violet-50 shadow-sm p-4 rounded-md">
-        <h2 class="text-xl font-bold mb-6">Outros produtos</h2>
+      <section
+        :if={Enum.count(@streams.products) > 0 and !@loading}
+        class="mb-12 bg-violet-50 shadow-sm p-4 rounded-md"
+      >
+        <h2 class="text-xl font-bold mb-6"><%= @default_section_name %></h2>
 
         <div class="container mx-auto px-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

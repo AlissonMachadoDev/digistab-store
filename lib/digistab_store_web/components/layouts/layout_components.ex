@@ -65,12 +65,12 @@ defmodule DigistabStoreWeb.Layouts.LayoutComponents do
         x-show="categories"
         x-transition.origin.top.left
         @click.outside="categories = false"
-        class="flex flex-col md:w-fit md:flex-none md:grid md:grid-cols-2 md:gap-x-12 md:gap-y-2 mx-2 px-4 py-2 bg-violet-300 rounded-b-sm shadow-md md:absolute md:right-16"
+        class="flex flex-col md:w-fit md:flex-none md:grid md:grid-cols-2 md:gap-x-12 md:gap-y-2 mx-2 px-4 py-2 bg-violet-300 rounded-b-md shadow-md md:absolute md:right-16 opacity-95"
       >
         <a
           :for={category <- @categories}
-          href={"/categories/#{category.id}"}
-          class="bg-violet-100 hover:bg-gray-200 md:w-48 px-2 py-1 md:text-left text-center rounded-sm border-b"
+          href={~p"/products/categories/#{category.id}"}
+          class="bg-violet-100 hover:bg-gray-200 md:w-48 px-2 py-1 md:text-left text-center rounded-md border-b"
         >
           <%= category.name %>
         </a>

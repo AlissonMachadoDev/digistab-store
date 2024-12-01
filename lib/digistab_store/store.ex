@@ -91,6 +91,48 @@ defmodule DigistabStore.Store do
   def list_other_products do
     Product
     |> where(featured?: false)
+    |> preload([:status, :category, :photos])
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns a list of products that fits on search term.
+
+  ## Examples
+
+      iex> list_other_products()
+      [%Product{}, ...]
+
+  """
+  @spec search_products(binary()) :: [Product.t()]
+  def search_products(product_name) do
+    # Just for User Experience
+    :timer.sleep(2000)
+    search_term = "%#{product_name}%"
+
+    from(p in Product,
+      where:
+        ilike(p.name, ^search_term) or
+          ilike(p.description, ^search_term),
+      preload: [:status, :category, :photos]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns a list of products that belongs to a category.
+
+  ## Examples
+
+      iex> list_products_by_category()
+      [%Product{}, ...]
+
+  """
+  @spec list_products_by_category(binary()) :: [Product.t()]
+  def list_products_by_category(category_id) do
+    Product
+    |> where(category_id: ^category_id)
+    |> preload([:status, :category, :photos])
     |> Repo.all()
   end
 
