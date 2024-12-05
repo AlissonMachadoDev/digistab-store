@@ -18,13 +18,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
   alias DigistabStore.Store
 
-  @config %{
-    bucket: System.get_env("AWS_BUCKET_NAME"),
-    region: System.get_env("AWS_REGION"),
-    access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
-    secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
-  }
-
   @impl true
   def render(assigns) do
     ~H"""
@@ -444,7 +437,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     for entry <- completed do
       key = "digistab_store/products/#{entry.client_name}"
 
-      dest = Path.join("http://#{@config.bucket}.s3.amazonaws.com", key)
+      dest = Path.join("http://#{s3_config().bucket}.s3.amazonaws.com", key)
 
       %{"url" => dest}
     end
@@ -619,7 +612,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     key = "digistab_store/products/#{entry.client_name}"
 
     {:ok, fields} =
-      SimpleS3Upload.sign_form_upload(@config, @config.bucket,
+      SimpleS3Upload.sign_form_upload(s3_config(), s3_config().bucket,
         key: key,
         content_type: entry.client_type,
         max_file_size: uploads[entry.upload_config].max_file_size,
@@ -629,11 +622,21 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     meta = %{
       uploader: "S3",
       key: key,
-      url: "http://#{@config.bucket}.s3-#{@config.region}.amazonaws.com",
+      url: "http://#{s3_config().bucket}.s3-#{s3_config().region}.amazonaws.com",
       fields: fields
     }
 
     {:ok, meta, socket}
+  end
+
+  # s3 config params at runtime  execution
+  def s3_config() do
+    %{
+      bucket: System.get_env("AWS_BUCKET_NAME"),
+      region: System.get_env("AWS_REGION"),
+      access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
+      secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
+    }
   end
 
   # Converts field names to atom keys used internally.
