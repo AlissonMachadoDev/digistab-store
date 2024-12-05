@@ -5,6 +5,10 @@ source /opt/digistab_store/scripts/check_db.sh
 echo "Fetching secrets from AWS Parameter Store..."
 DB_URL=$(aws ssm get-parameter --name "/digistab_store/prod/database_url" --with-decryption --query Parameter.Value --output text)
 KEY_BASE=$(aws ssm get-parameter --name "/digistab_store/prod/secret_key_base" --with-decryption --query Parameter.Value --output text)
+AWS_BUCKET_NAME=$(aws ssm get-parameter --name "/digistab_store/prod/aws_bucket_name" --with-decryption --query Parameter.Value --output text)
+AWS_REGION=$(aws ssm get-parameter --name "/digistab_store/prod/aws_region" --with-decryption --query Parameter.Value --output text)
+AWS_ACCESS_KEY_ID=$(aws ssm get-parameter --name "/digistab_store/prod/aws_access_key_id" --with-decryption --query Parameter.Value --output text)
+AWS_SECRET_ACCESS_KEY=$(aws ssm get-parameter --name "/digistab_store/prod/aws_secret_access_key" --with-decryption --query Parameter.Value --output text)
 
 
 echo "Setting up directory permissions..."
@@ -33,6 +37,10 @@ Environment=POOL_SIZE=10
 Environment=RELEASE_NAME=digistab_store
 Environment=DATABASE_URL=${DB_URL}
 Environment=SECRET_KEY_BASE=${KEY_BASE}
+Environment=AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
+Environment=AWS_REGION=${AWS_REGION}
+Environment=AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+Environment=AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 
 ExecStart=/opt/digistab_store/_build/prod/rel/digistab_store/bin/digistab_store start
 ExecStop=/opt/digistab_store/_build/prod/rel/digistab_store/bin/digistab_store stop
