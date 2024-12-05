@@ -19,10 +19,10 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
   alias DigistabStore.Store
 
   @config %{
-    bucket: Application.get_env(:digistab_store, :bucket),
-    region: Application.get_env(:digistab_store, :region),
-    access_key_id: Application.get_env(:digistab_store, :access_key_id),
-    secret_access_key: Application.get_env(:digistab_store, :secret_access_key)
+    bucket: System.get_env("AWS_BUCKET_NAME"),
+    region: System.get_env("AWS_REGION"),
+    access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
+    secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
   }
 
   @impl true
