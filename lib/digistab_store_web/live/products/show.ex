@@ -32,7 +32,7 @@ defmodule DigistabStoreWeb.ProductLive.Show do
 
     {:noreply,
      socket
-     |> assign(:page_title, page_title(socket.assigns.live_action))
+     |> assign(:page_title, product.name)
      |> assign(:product, product)
      |> assign(:current_photo, List.first(product.photos))}
   end
