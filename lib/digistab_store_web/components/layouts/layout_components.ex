@@ -27,7 +27,7 @@ defmodule DigistabStoreWeb.Layouts.LayoutComponents do
         </.link>
 
         <div class="flex flex-row border-gray-200 space-x-2">
-          <button class="flex flex-row px-4 py-1 space-x-1 text-violet-500 hover:bg-violet-500 hover:text-white hover:cursor-pointer ">
+          <button class="flex flex-row px-4 py-1 space-x-1 text-violet-500 hover:bg-violet-500 hover:text-white  cursor-not-allowed">
             <p>
               10
             </p>
@@ -50,7 +50,7 @@ defmodule DigistabStoreWeb.Layouts.LayoutComponents do
               <%= icon(%{name: "hero-chevron-down"}) %>
             </p>
           </button>
-          <button class="flex flex-row px-4 pt-1 pb-2 space-x-1 text-violet-500 hover:bg-violet-500 hover:text-white hover:cursor-pointer ">
+          <button class="flex flex-row px-4 pt-1 pb-2 space-x-1 text-violet-500 hover:bg-violet-500 hover:text-white  cursor-not-allowed">
             <p>
               My account
             </p>
@@ -88,27 +88,11 @@ defmodule DigistabStoreWeb.Layouts.LayoutComponents do
             <div class="flex flex-col items-center justify-center w-96">
               <div class="flex w-72 gap-4 mb-2"><img src="/images/logo.svg" /></div>
               <p class="text-justify italic">
-                Digistab Store é uma marca ficcional criada por Alisson Machado apenas para ilustrar habilidades de design e deselvolvimento, portanto, não há nenhuma marca relacionada, que eu saiba.
+                Digistab Store is a fictional brand created by Alisson Machado just to illustrate design and development skills, so there is no related brand as far as I know.
               </p>
             </div>
           </div>
           <div class="flex flex-col md:flex-row md:w-1/2 justify-around">
-            <div class="flex flex-col">
-              <div class="flex flex-col mb-4 px-4">
-                <h2 class="font-semibold text-center mb-2">Follow me</h2>
-                <div class="grid grid-cols-1 gap-x-4 gap-y-1 text-center">
-                  <p>Linkedin</p>
-                  <p>GitHub</p>
-                </div>
-              </div>
-              <div class="flex flex-col mb-4 px-4">
-                <h2 class="font-semibold text-center mb-2">Other projects</h2>
-                <div class="grid grid-cols-1 gap-x-4 gap-y-1 text-center">
-                  <p>...</p>
-                  <p>...</p>
-                </div>
-              </div>
-            </div>
             <div class="flex flex-col w-fit">
               <h2 class="font-semibold text-center mb-2">Technologies</h2>
               <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-center">

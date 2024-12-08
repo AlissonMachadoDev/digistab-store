@@ -107,7 +107,7 @@ defmodule DigistabStore.Store do
   @spec search_products(binary()) :: [Product.t()]
   def search_products(product_name) do
     # Just for User Experience
-    :timer.sleep(2000)
+    :timer.sleep(1000)
     search_term = "%#{product_name}%"
 
     from(p in Product,

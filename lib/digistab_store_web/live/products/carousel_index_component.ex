@@ -98,7 +98,7 @@ defmodule DigistabStoreWeb.ProductCarousel do
                   phx-value-id={product.id}
                   class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
                 >
-                  ADICIONAR
+                  ADD TO CART
                 </button>
               </div>
             </div>
@@ -131,7 +131,7 @@ defmodule DigistabStoreWeb.ProductCarousel do
                     phx-value-id={Enum.at(@featured_products, index + 1).id}
                     class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
                   >
-                    ADICIONAR
+                    ADD TO CART
                   </button>
                 </div>
               </div>

@@ -56,11 +56,11 @@ defmodule DigistabStoreWeb.Components.ProductCard do
               phx-value-id={@product.id}
               class="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
             >
-              ADICIONAR
+              ADD TO CART
             </button>
           <% else %>
             <div class="w-full py-2 px-4 bg-gray-400 text-white font-semibold rounded-lg text-center cursor-not-allowed">
-              INDISPONÍVEL
+              OUT OF STOCK
             </div>
           <% end %>
         </div>
