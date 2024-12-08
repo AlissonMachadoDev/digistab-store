@@ -67,7 +67,12 @@ defmodule DigistabStoreWeb.ErrorHelpers do
       )
 
   def error_to_string(:external_client_failure),
-    do: Gettext.dgettext(DigistabStoreWeb.Gettext, "errors", "Failed to upload")
+    do:
+      Gettext.dgettext(
+        DigistabStoreWeb.Gettext,
+        "errors",
+        "Failed to upload - external_client_failure"
+      )
 
   def error_to_string(_) do
     Gettext.dgettext(DigistabStoreWeb.Gettext, "errors", "Failed to upload")

@@ -437,7 +437,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     for entry <- completed do
       key = "digistab_store/products/#{entry.client_name}"
 
-      dest = Path.join("http://#{s3_config().bucket}.s3.amazonaws.com", key)
+      dest = Path.join("https://#{s3_config().bucket}.s3.amazonaws.com", key)
 
       %{"url" => dest}
     end
@@ -609,24 +609,31 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
   # AWS fields for secure file uploads, as well as any necessary file restrictions.
   defp presign_upload(entry, socket) do
     uploads = socket.assigns.uploads
-    key = "digistab_store/products/#{entry.client_name}"
 
-    {:ok, fields} =
-      SimpleS3Upload.sign_form_upload(s3_config(), s3_config().bucket,
-        key: key,
-        content_type: entry.client_type,
-        max_file_size: uploads[entry.upload_config].max_file_size,
-        expires_in: :timer.hours(1)
-      )
+    case uploads[entry.upload_config] do
+      nil ->
+        {:error, :upload_cancelled}
 
-    meta = %{
-      uploader: "S3",
-      key: key,
-      url: "http://#{s3_config().bucket}.s3-#{s3_config().region}.amazonaws.com",
-      fields: fields
-    }
+      upload_config ->
+        key = "digistab_store/products/#{entry.client_name}"
 
-    {:ok, meta, socket}
+        {:ok, fields} =
+          SimpleS3Upload.sign_form_upload(s3_config(), s3_config().bucket,
+            key: key,
+            content_type: entry.client_type,
+            max_file_size: upload_config.max_file_size,
+            expires_in: :timer.hours(1)
+          )
+
+        meta = %{
+          uploader: "S3",
+          key: key,
+          url: "https://#{s3_config().bucket}.s3-#{s3_config().region}.amazonaws.com",
+          fields: fields
+        }
+
+        {:ok, meta, socket}
+    end
   end
 
   # s3 config params at runtime  execution
