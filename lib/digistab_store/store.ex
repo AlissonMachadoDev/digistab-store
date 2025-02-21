@@ -50,9 +50,13 @@ defmodule DigistabStore.Store do
   @spec list_products() :: [Product.t()]
   def list_products do
     Product
-    |> preload([:status, :category, :photos])
     |> order_by([p], p.inserted_at)
     |> Repo.all()
+  end
+
+  def list_products(_preload? = true) do
+    list_products()
+    |> Repo.preload([:status, :category, :photos])
   end
 
   @doc """
@@ -113,10 +117,14 @@ defmodule DigistabStore.Store do
     from(p in Product,
       where:
         ilike(p.name, ^search_term) or
-          ilike(p.description, ^search_term),
-      preload: [:status, :category, :photos]
+          ilike(p.description, ^search_term)
     )
     |> Repo.all()
+  end
+
+  def search_products(product_name, _preload? = true) do
+    search_products(product_name)
+    |> Repo.preload([:status, :category, :photos])
   end
 
   @doc """
@@ -168,6 +176,10 @@ defmodule DigistabStore.Store do
   @spec get_product!(binary()) :: Product.t() | no_return()
   def get_product!(id) do
     Repo.get!(Product, id)
+  end
+
+  def get_product!(id, _preload? = true) do
+    get_product!(id)
     |> preload_product!()
   end
 

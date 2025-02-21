@@ -28,7 +28,7 @@ defmodule DigistabStoreWeb.ProductLive.Show do
 
   @impl true
   def handle_params(%{"id" => id}, _, socket) do
-    product = Store.get_product!(id)
+    product = Store.get_product!(id, true)
 
     {:noreply,
      socket
