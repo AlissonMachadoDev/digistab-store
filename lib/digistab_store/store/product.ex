@@ -90,7 +90,6 @@ defmodule DigistabStore.Store.Product do
     |> validate_stock()
     |> validate_status()
     |> validate_category()
-    |> validate_photos()
     |> change_photos(attrs["photos"] || attrs[:photos])
     |> change_tags(attrs["tags"] || attrs[:tags] || [])
   end
@@ -103,6 +102,7 @@ defmodule DigistabStore.Store.Product do
   def change_photos(%Ecto.Changeset{} = changeset, photos) when is_list(photos) do
     changeset
     |> cast_assoc(:photos, with: &ProductPhoto.changeset/2)
+    |> validate_photos()
   end
 
   def change_photos(%Ecto.Changeset{} = changeset, _), do: changeset

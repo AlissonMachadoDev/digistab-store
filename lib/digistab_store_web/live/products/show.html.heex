@@ -1,4 +1,30 @@
 <div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="my-8 flex justify-between">
+    <.link
+      navigate={~p"/products"}
+      class="text-violet-600 hover:text-violet-800 flex items-center gap-2"
+    >
+      <.icon name="hero-arrow-left-solid" class="w-4 h-4" /> Back to Products
+    </.link>
+
+    <%= if @is_admin do %>
+      <div class="flex gap-4">
+        <.link
+          navigate={~p"/products/#{@product}/edit"}
+          class="px-4 py-2 rounded-lg bg-violet-100 text-violet-700 hover:bg-violet-200"
+        >
+          Edit
+        </.link>
+        <button
+          phx-click="delete_product"
+          data-confirm="Are you sure?"
+          class="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
+        >
+          Delete
+        </button>
+      </div>
+    <% end %>
+  </div>
   <div class="bg-white rounded-lg shadow-lg overflow-hidden pb-4">
     <div class="md:flex">
       <!-- Galeria de Imagens -->
@@ -89,30 +115,4 @@
     </div>
   </div>
   <!-- Navegação -->
-  <div class="mt-8 flex justify-between">
-    <.link
-      navigate={~p"/products"}
-      class="text-violet-600 hover:text-violet-800 flex items-center gap-2"
-    >
-      <.icon name="hero-arrow-left-solid" class="w-4 h-4" /> Back to Products
-    </.link>
-
-    <%= if @is_admin do %>
-      <div class="flex gap-4">
-        <.link
-          navigate={~p"/products/#{@product}/edit"}
-          class="px-4 py-2 rounded-lg bg-violet-100 text-violet-700 hover:bg-violet-200"
-        >
-          Edit
-        </.link>
-        <button
-          phx-click="delete_product"
-          data-confirm="Are you sure?"
-          class="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
-        >
-          Delete
-        </button>
-      </div>
-    <% end %>
-  </div>
 </div>

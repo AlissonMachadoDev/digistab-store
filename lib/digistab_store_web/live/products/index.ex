@@ -47,7 +47,7 @@ defmodule DigistabStoreWeb.ProductLive.Index do
     socket
     |> assign(:page_title, "Edit Product")
     |> assign(:current_action, :edit)
-    |> assign(:product, Store.get_product!(id))
+    |> assign(:product, Store.get_product!(id, true))
   end
 
   defp apply_action(socket, :new, _params) do
@@ -76,7 +76,7 @@ defmodule DigistabStoreWeb.ProductLive.Index do
   def handle_info({:run_search, query}, socket) do
     socket =
       socket
-      |> stream(:products, Store.search_products(query), reset: true)
+      |> stream(:products, Store.search_products(query, true), reset: true)
       |> assign(
         loading: false,
         default_section_name: "Found products by '#{query}'"
@@ -105,7 +105,7 @@ defmodule DigistabStoreWeb.ProductLive.Index do
         default_section_name: "Other products",
         current_action: :index
       )
-      |> stream(:products, Store.list_products(), reset: true)
+      |> stream(:products, Store.list_products(true), reset: true)
 
     {:noreply, socket}
   end
@@ -127,7 +127,7 @@ defmodule DigistabStoreWeb.ProductLive.Index do
   end
 
   def handle_event("delete", %{"id" => id}, socket) do
-    product = Store.get_product!(id)
+    product = Store.get_product!(id, true)
     {:ok, _} = Store.delete_product(product)
 
     socket =
@@ -152,7 +152,7 @@ defmodule DigistabStoreWeb.ProductLive.Index do
   defp default_assigns(socket) do
     featured_products = Store.list_featured_products()
 
-    products = Store.list_products()
+    products = Store.list_products(true)
 
     assign(socket,
       query: "",

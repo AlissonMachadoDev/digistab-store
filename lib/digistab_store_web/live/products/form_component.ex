@@ -463,7 +463,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
   # Persists changes to a product based on the action (`:edit` or `:new`).
   defp save_product(socket, :edit, product_params) do
-    product = Store.get_product!(socket.assigns.product.id)
+    product = Store.get_product!(socket.assigns.product.id, true)
 
     case Store.update_product(product, product_params) do
       {:ok, product} ->
