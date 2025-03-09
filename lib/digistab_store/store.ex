@@ -56,7 +56,7 @@ defmodule DigistabStore.Store do
 
   def list_products(_preload? = true) do
     list_products()
-    |> Repo.preload([:status, :category, :photos])
+    |> Repo.preload([:tags, :status, :category, :photos])
   end
 
   @doc """

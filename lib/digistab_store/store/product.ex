@@ -148,15 +148,29 @@ defmodule DigistabStore.Store.Product do
   end
 
   defp validate_promotional_price(%Ecto.Changeset{} = changeset) do
+    if should_validate_promo_price?(changeset) do
+      check_promo_price_validity(changeset)
+    else
+      changeset
+    end
+  end
+
+  defp should_validate_promo_price?(changeset) do
+    has_price_changes = changeset.changes[:price] || changeset.changes[:promotional_price]
     price = get_field(changeset, :price)
     promo_price = get_field(changeset, :promotional_price)
 
-    with true <- not is_nil(price) and not is_nil(promo_price),
-         true <- promo_price < price do
+    has_price_changes && not is_nil(price) && not is_nil(promo_price)
+  end
+
+  defp check_promo_price_validity(changeset) do
+    price = get_field(changeset, :price)
+    promo_price = get_field(changeset, :promotional_price)
+
+    if promo_price < price do
       changeset
     else
-      false ->
-        add_error(changeset, :promotional_price, "invalid promotional price")
+      add_error(changeset, :promotional_price, "invalid promotional price")
     end
   end
 
