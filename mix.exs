@@ -9,7 +9,15 @@ defmodule DigistabStore.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      # minimum_coverage: 90],
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ]
     ]
   end
 
@@ -60,7 +68,13 @@ defmodule DigistabStore.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:phoenix_html_helpers, "~> 1.0"},
-      {:money, "~> 1.12"}
+      {:money, "~> 1.12"},
+      {:excoveralls, "~> 0.18", only: :test},
+      {:faker, "~> 0.15.0"},
+      {:credo, "~> 1.5", only: [:dev, :test]},
+      {:ex_machina, "~> 2.6", only: :test},
+      {:ex_doc, "~> 0.31.0"},
+      {:libcluster, "~> 3.5"}
     ]
   end
 
@@ -82,7 +96,11 @@ defmodule DigistabStore.MixProject do
         "tailwind digistab_store --minify",
         "esbuild digistab_store --minify",
         "phx.digest"
-      ]
+      ],
+      "test.coverage": [
+        "cmd MIX_ENV=test mix do ecto.drop, ecto.create, ecto.migrate, coveralls.html"
+      ],
+      check: ["format", "credo --strict"]
     ]
   end
 end
