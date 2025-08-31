@@ -1,168 +1,153 @@
 #!/bin/bash
 
-# Exit on error and print commands
 set -e
 set -x
 
-echo "Starting after_install script..."
-
-# Set timeout for the entire script (30 minutes)
-TIMEOUT=600
 SCRIPT_START=$SECONDS
+TIMEOUT=1200  # 20 minutos - mais realista
+APP_DIR="/opt/digistab_store"
 
-check_timeout() {
-    if [ $((SECONDS - SCRIPT_START)) -gt $TIMEOUT ]; then
-        echo "Script timed out after 30 minutes"
+log_progress() {
+    local elapsed=$((SECONDS - SCRIPT_START))
+    echo "[$(date '+%H:%M:%S')] [$elapsed s] $1"
+    
+    if [ $elapsed -gt $TIMEOUT ]; then
+        echo "TIMEOUT: Script exceeded ${TIMEOUT}s"
         exit 1
     fi
 }
 
-# Export environment variables with error checking
-export HOME="/home/ubuntu"
-export MIX_ENV=prod
-export PATH="$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
-
-# Function to install Node.js with timeout
-install_nodejs() {
-    echo "Installing Node.js..."
+retry_command() {
+    local max_attempts=3
+    local delay=3
+    local timeout_duration=120
+    local cmd="$@"
     
-    # 5-minute timeout for Node.js installation
-    if ! timeout 300 bash -c '
-        sudo apt-get update &&
-        sudo apt-get install -y ca-certificates curl gnupg &&
-        sudo mkdir -p /etc/apt/keyrings &&
+    for attempt in $(seq 1 $max_attempts); do
+        log_progress "Attempt $attempt: $cmd"
+        if timeout $timeout_duration bash -c "$cmd"; then
+            return 0
+        fi
+        [ $attempt -lt $max_attempts ] && sleep $delay
+    done
+    
+    echo "FAILED: $cmd after $max_attempts attempts"
+    exit 1
+}
+
+check_and_install_nodejs() {
+    if command -v node &> /dev/null && command -v npm &> /dev/null; then
+        log_progress "Node.js already installed: $(node --version)"
+        return 0
+    fi
+    
+    log_progress "Installing Node.js..."
+    retry_command "
         curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg &&
-        echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list &&
-        sudo apt-get update &&
+        echo 'deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main' | sudo tee /etc/apt/sources.list.d/nodesource.list &&
+        sudo apt-get update -qq &&
         sudo apt-get install -y nodejs
-    '; then
-        echo "Node.js installation timed out or failed"
-        exit 1
-    fi
-    
-    # Verify installation
-    if ! node --version; then
-        echo "Node.js installation verification failed"
-        exit 1
-    fi
-    if ! npm --version; then
-        echo "npm installation verification failed"
-        exit 1
-    fi
-    
-    echo "Node.js installation completed"
+    "
+    log_progress "Node.js installed: $(node --version)"
 }
 
-# Install Node.js if needed (with timeout check)
-if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
-    install_nodejs
-    check_timeout
-fi
+setup_environment() {
+    export HOME="/home/ubuntu"
+    export MIX_ENV=prod
+    export PATH="$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
+    
+    if [ ! -f "$HOME/.asdf/asdf.sh" ]; then
+        echo "FATAL: asdf.sh not found"
+        exit 1
+    fi
+    
+    source "$HOME/.asdf/asdf.sh"
+    cd "$APP_DIR" || { echo "FATAL: Cannot cd to $APP_DIR"; exit 1; }
+}
 
-# Verify development tools
-echo "Node.js version: $(node --version)"
-echo "npm version: $(npm --version)"
+install_build_tools() {
+    if ! command -v rebar3 &> /dev/null; then
+        log_progress "Installing rebar3..."
+        retry_command "wget -q https://s3.amazonaws.com/rebar3/rebar3 && chmod +x rebar3 && sudo mv rebar3 /usr/local/bin/"
+    fi
+    
+    log_progress "Installing hex/rebar..."
+    timeout 60 mix local.hex --force || exit 1
+    timeout 60 mix local.rebar --force || exit 1
+}
 
-# Source asdf with error checking
-if [ -f "$HOME/.asdf/asdf.sh" ]; then
-    source "$HOME/.asdf/asdf.sh" || {
-        echo "Failed to source asdf.sh"
+install_dependencies() {
+    log_progress "Getting Elixir dependencies..."
+    timeout 300 mix deps.get --only prod || {
+        echo "FATAL: mix deps.get failed"
         exit 1
     }
-    echo "Sourced asdf.sh"
-else
-    echo "Error: asdf.sh not found"
-    exit 1
-fi
+    
+    log_progress "Installing npm dependencies..."
+    cd assets || exit 1
+    
+    # Usar npm ci se package-lock.json existe (mais rápido)
+    if [ -f "package-lock.json" ]; then
+        timeout 300 npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund || {
+            log_progress "npm ci failed, trying npm install..."
+            timeout 300 npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
+        }
+    else
+        timeout 300 npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
+    fi
+    
+    cd .. || exit 1
+}
 
-# Check required tools
-for cmd in erl elixir mix; do
-    if ! command -v $cmd &> /dev/null; then
-        echo "Error: $cmd not found"
+build_application() {
+    log_progress "Compiling application..."
+    timeout 240 mix compile || {
+        echo "FATAL: mix compile failed"
+        exit 1
+    }
+    
+    log_progress "Deploying assets..."
+    timeout 300 mix assets.deploy || {
+        echo "FATAL: mix assets.deploy failed"
+        exit 1
+    }
+    
+    log_progress "Creating release..."
+    timeout 300 mix release --overwrite || {
+        echo "FATAL: mix release failed"
+        exit 1
+    }
+    
+    # Verificação final
+    if [ ! -f "_build/prod/rel/digistab_store/bin/digistab_store" ]; then
+        echo "FATAL: Release binary not created"
         exit 1
     fi
-done
-
-# Navigate to application directory
-cd /opt/digistab_store || {
-    echo "Failed to change to application directory"
-    exit 1
 }
 
-# Install rebar3 with timeout
-timeout 60 bash -c '
-    wget https://s3.amazonaws.com/rebar3/rebar3 &&
-    chmod +x rebar3 &&
-    sudo mv rebar3 /usr/local/bin/
-' || {
-    echo "Failed to install rebar3"
-    exit 1
+cleanup_temp_files() {
+    log_progress "Cleaning up..."
+    # Remove cache desnecessário pra economizar espaço
+    mix deps.clean --unused --build 2>/dev/null || true
+    cd assets && npm cache clean --force 2>/dev/null || true
+    cd ..
 }
 
-# Verify rebar3
-if ! rebar3 --version; then
-    echo "rebar3 installation verification failed"
-    exit 1
-fi
+main() {
+    log_progress "Starting deployment..."
+    
+    setup_environment
+    check_and_install_nodejs
+    install_build_tools
+    install_dependencies
+    build_application
+    cleanup_temp_files
+    
+    local duration=$((SECONDS - SCRIPT_START))
+    log_progress "SUCCESS: Deployment completed in ${duration}s"
+}
 
-# Install hex and rebar with timeout
-echo "Installing hex and rebar..."
-if ! timeout 60 mix local.hex --force; then
-    echo "Failed to install hex"
-    exit 1
-fi
-if ! timeout 60 mix local.rebar --force; then
-    echo "Failed to install rebar"
-    exit 1
-fi
+# Handle script interruption
+trap 'echo "Script interrupted at $((SECONDS - SCRIPT_START))s"; exit 1' INT TERM
 
-# Get dependencies with timeout
-echo "Getting dependencies..."
-if ! timeout 300 mix deps.get --only prod; then
-    echo "Failed to get dependencies"
-    exit 1
-fi
-check_timeout
-
-# Install node dependencies
-echo "Installing node dependencies..."
-cd assets || exit 1
-if [ ! -f "package.json" ]; then
-    echo "Error: package.json not found in $(pwd)"
-    exit 1
-fi
-if ! timeout 300 npm install --legacy-peer-deps; then
-    echo "npm install failed"
-    exit 1
-fi
-cd .. || exit 1
-check_timeout
-
-# Compile and deploy assets with timeout
-echo "Compiling and deploying assets..."
-if ! timeout 300 mix compile; then
-    echo "mix compile failed"
-    exit 1
-fi
-if ! timeout 300 mix assets.deploy; then
-    echo "mix assets.deploy failed"
-    exit 1
-fi
-check_timeout
-
-# Create production release with timeout
-echo "Creating production release..."
-if ! timeout 300 mix release --overwrite; then
-    echo "Release creation failed"
-    exit 1
-fi
-
-# Verify release
-if [ ! -f "_build/prod/rel/digistab_store/bin/digistab_store" ]; then
-    echo "Error: Release binary not found"
-    exit 1
-fi
-
-DURATION=$((SECONDS - SCRIPT_START))
-echo "After install script completed successfully in $DURATION seconds"
-exit 0
+main "$@"
