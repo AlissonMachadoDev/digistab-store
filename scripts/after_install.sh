@@ -101,7 +101,7 @@ install_dependencies() {
 
 build_application() {
     log_progress "Compiling application..."
-    timeout 240 mix compile || {
+    timeout 600 mix compile --verbose --return-errors || {
         echo "FATAL: mix compile failed"
         exit 1
     }
