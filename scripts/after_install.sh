@@ -99,9 +99,33 @@ install_dependencies() {
     cd .. || exit 1
 }
 
+add_temporary_swap() {
+    if [ ! -f /swapfile ] && [ $(free | awk '/^Mem:/{print $2}') -lt 2000000 ]; then
+        log_progress "Adding temporary swap (low memory detected)..."
+        sudo fallocate -l 2G /tmp/temp_swap
+        sudo mkswap /tmp/temp_swap
+        sudo swapon /tmp/temp_swap
+        echo "Swap added: $(free -h | grep Swap)"
+    fi
+}
+
+remove_temporary_swap() {
+    if [ -f /tmp/temp_swap ]; then
+        log_progress "Removing temporary swap..."
+        sudo swapoff /tmp/temp_swap 2>/dev/null || true
+        sudo rm -f /tmp/temp_swap
+    fi
+}
+
 build_application() {
-    log_progress "Compiling application..."
-    timeout 600 mix compile --verbose --return-errors || {
+    log_progress "Pre-compiling dependencies..."
+    timeout 300 mix deps.compile --jobs 1 || {
+        echo "FATAL: deps compile failed"
+        exit 1
+    }
+    
+    log_progress "Compiling application code..."
+    timeout 300 env ERL_MAX_PORTS=4096 mix compile --verbose --return-errors --jobs 2 || {
         echo "FATAL: mix compile failed"
         exit 1
     }
@@ -118,7 +142,6 @@ build_application() {
         exit 1
     }
     
-    # Verificação final
     if [ ! -f "_build/prod/rel/digistab_store/bin/digistab_store" ]; then
         echo "FATAL: Release binary not created"
         exit 1
@@ -139,8 +162,10 @@ main() {
     setup_environment
     check_and_install_nodejs
     install_build_tools
+    add_temporary_swap
     install_dependencies
     build_application
+    remove_temporary_swap
     cleanup_temp_files
     
     local duration=$((SECONDS - SCRIPT_START))
