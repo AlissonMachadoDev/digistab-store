@@ -6,7 +6,7 @@ check_database_connection() {
   local wait_time=5
 
   # Extract connection details from DATABASE_URL
-  if [[ $db_url =~ (?:postgres|postgresql):\/\/([^:]+):([^@]+)@([^:\/]+)(:([0-9]+))?\/(.+) ]]; then
+  if [[ $db_url =~ (postgres|postgresql):\/\/([^:]+):([^@]+)@([^:\/]+)(:([0-9]+))?\/(.+) ]]; then
     DB_USER="${BASH_REMATCH[2]}"
     DB_PASS="${BASH_REMATCH[3]}"
     DB_HOST="${BASH_REMATCH[4]}"
