@@ -4,172 +4,175 @@ set -e
 set -x
 
 SCRIPT_START=$SECONDS
-TIMEOUT=1200  # 20 minutos - mais realista
+TIMEOUT=1200 # 20 minutos - mais realista
 APP_DIR="/opt/digistab_store"
 
 log_progress() {
-    local elapsed=$((SECONDS - SCRIPT_START))
-    echo "[$(date '+%H:%M:%S')] [$elapsed s] $1"
-    
-    if [ $elapsed -gt $TIMEOUT ]; then
-        echo "TIMEOUT: Script exceeded ${TIMEOUT}s"
-        exit 1
-    fi
+  local elapsed=$((SECONDS - SCRIPT_START))
+  echo "[$(date '+%H:%M:%S')] [$elapsed s] $1"
+
+  if [ $elapsed -gt $TIMEOUT ]; then
+    echo "TIMEOUT: Script exceeded ${TIMEOUT}s"
+    exit 1
+  fi
 }
 
 retry_command() {
-    local max_attempts=3
-    local delay=3
-    local timeout_duration=120
-    local cmd="$@"
-    
-    for attempt in $(seq 1 $max_attempts); do
-        log_progress "Attempt $attempt: $cmd"
-        if timeout $timeout_duration bash -c "$cmd"; then
-            return 0
-        fi
-        [ $attempt -lt $max_attempts ] && sleep $delay
-    done
-    
-    echo "FAILED: $cmd after $max_attempts attempts"
-    exit 1
+  local max_attempts=3
+  local delay=3
+  local timeout_duration=120
+  local cmd="$@"
+
+  for attempt in $(seq 1 $max_attempts); do
+    log_progress "Attempt $attempt: $cmd"
+    if timeout $timeout_duration bash -c "$cmd"; then
+      return 0
+    fi
+    [ $attempt -lt $max_attempts ] && sleep $delay
+  done
+
+  echo "FAILED: $cmd after $max_attempts attempts"
+  exit 1
 }
 
 check_and_install_nodejs() {
-    if command -v node &> /dev/null && command -v npm &> /dev/null; then
-        log_progress "Node.js already installed: $(node --version)"
-        return 0
-    fi
-    
-    log_progress "Installing Node.js..."
-    retry_command "
+  if command -v node &>/dev/null && command -v npm &>/dev/null; then
+    log_progress "Node.js already installed: $(node --version)"
+    return 0
+  fi
+
+  log_progress "Installing Node.js..."
+  retry_command "
         curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg &&
         echo 'deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main' | sudo tee /etc/apt/sources.list.d/nodesource.list &&
         sudo apt-get update -qq &&
         sudo apt-get install -y nodejs
     "
-    log_progress "Node.js installed: $(node --version)"
+  log_progress "Node.js installed: $(node --version)"
 }
 
 setup_environment() {
-    export HOME="/home/ubuntu"
-    export MIX_ENV=prod
-    export PATH="$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
-    
-    if [ ! -f "$HOME/.asdf/asdf.sh" ]; then
-        echo "FATAL: asdf.sh not found"
-        exit 1
-    fi
-    
-    source "$HOME/.asdf/asdf.sh"
-    cd "$APP_DIR" || { echo "FATAL: Cannot cd to $APP_DIR"; exit 1; }
+  export HOME="/home/ubuntu"
+  export MIX_ENV=prod
+  export PATH="$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
+
+  if [ ! -f "$HOME/.asdf/asdf.sh" ]; then
+    echo "FATAL: asdf.sh not found"
+    exit 1
+  fi
+
+  source "$HOME/.asdf/asdf.sh"
+  cd "$APP_DIR" || {
+    echo "FATAL: Cannot cd to $APP_DIR"
+    exit 1
+  }
 }
 
 install_build_tools() {
-    if ! command -v rebar3 &> /dev/null; then
-        log_progress "Installing rebar3..."
-        retry_command "wget -q https://s3.amazonaws.com/rebar3/rebar3 && chmod +x rebar3 && sudo mv rebar3 /usr/local/bin/"
-    fi
-    
-    log_progress "Installing hex/rebar..."
-    timeout 60 mix local.hex --force || exit 1
-    timeout 60 mix local.rebar --force || exit 1
+  if ! command -v rebar3 &>/dev/null; then
+    log_progress "Installing rebar3..."
+    retry_command "wget -q https://s3.amazonaws.com/rebar3/rebar3 && chmod +x rebar3 && sudo mv rebar3 /usr/local/bin/"
+  fi
+
+  log_progress "Installing hex/rebar..."
+  timeout 60 mix local.hex --force || exit 1
+  timeout 60 mix local.rebar --force || exit 1
 }
 
 install_dependencies() {
-    log_progress "Getting Elixir dependencies..."
-    timeout 300 mix deps.get --only prod || {
-        echo "FATAL: mix deps.get failed"
-        exit 1
+  log_progress "Getting Elixir dependencies..."
+  timeout 300 mix deps.get --only prod || {
+    echo "FATAL: mix deps.get failed"
+    exit 1
+  }
+
+  log_progress "Installing npm dependencies..."
+  cd assets || exit 1
+
+  # Usar npm ci se package-lock.json existe (mais rápido)
+  if [ -f "package-lock.json" ]; then
+    timeout 300 npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund || {
+      log_progress "npm ci failed, trying npm install..."
+      timeout 300 npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
     }
-    
-    log_progress "Installing npm dependencies..."
-    cd assets || exit 1
-    
-    # Usar npm ci se package-lock.json existe (mais rápido)
-    if [ -f "package-lock.json" ]; then
-        timeout 300 npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund || {
-            log_progress "npm ci failed, trying npm install..."
-            timeout 300 npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
-        }
-    else
-        timeout 300 npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
-    fi
-    
-    cd .. || exit 1
+  else
+    timeout 300 npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
+  fi
+
+  cd .. || exit 1
 }
 
 add_temporary_swap() {
-    if [ ! -f /swapfile ] && [ $(free | awk '/^Mem:/{print $2}') -lt 2000000 ]; then
-        log_progress "Adding temporary swap (low memory detected)..."
-        sudo fallocate -l 2G /tmp/temp_swap
-        sudo mkswap /tmp/temp_swap
-        sudo swapon /tmp/temp_swap
-        echo "Swap added: $(free -h | grep Swap)"
-    fi
+  if [ ! -f /swapfile ] && [ $(free | awk '/^Mem:/{print $2}') -lt 2000000 ]; then
+    log_progress "Adding temporary swap (low memory detected)..."
+    sudo fallocate -l 2G /tmp/temp_swap
+    sudo mkswap /tmp/temp_swap
+    sudo swapon /tmp/temp_swap
+    echo "Swap added: $(free -h | grep Swap)"
+  fi
 }
 
 remove_temporary_swap() {
-    if [ -f /tmp/temp_swap ]; then
-        log_progress "Removing temporary swap..."
-        sudo swapoff /tmp/temp_swap 2>/dev/null || true
-        sudo rm -f /tmp/temp_swap
-    fi
+  if [ -f /tmp/temp_swap ]; then
+    log_progress "Removing temporary swap..."
+    sudo swapoff /tmp/temp_swap 2>/dev/null || true
+    sudo rm -f /tmp/temp_swap
+  fi
 }
 
 build_application() {
-    log_progress "Pre-compiling dependencies..."
-    timeout 300 mix deps.compile --jobs 1 || {
-        echo "FATAL: deps compile failed"
-        exit 1
-    }
-    
-    log_progress "Compiling application code..."
-    timeout 300 env ERL_MAX_PORTS=4096 mix compile --verbose --return-errors --jobs 2 || {
-        echo "FATAL: mix compile failed"
-        exit 1
-    }
-    
-    log_progress "Deploying assets..."
-    timeout 300 mix assets.deploy || {
-        echo "FATAL: mix assets.deploy failed"
-        exit 1
-    }
-    
-    log_progress "Creating release..."
-    timeout 300 mix release --overwrite || {
-        echo "FATAL: mix release failed"
-        exit 1
-    }
-    
-    if [ ! -f "_build/prod/rel/digistab_store/bin/digistab_store" ]; then
-        echo "FATAL: Release binary not created"
-        exit 1
-    fi
+  log_progress "Pre-compiling dependencies..."
+  timeout 300 mix deps.compile --jobs 1 || {
+    echo "FATAL: deps compile failed"
+    exit 1
+  }
+
+  log_progress "Compiling application code..."
+  timeout 300 env ERL_MAX_PORTS=4096 mix compile --verbose --return-errors --jobs 2 || {
+    echo "FATAL: mix compile failed"
+    exit 1
+  }
+
+  log_progress "Deploying assets..."
+  timeout 300 mix assets.deploy || {
+    echo "FATAL: mix assets.deploy failed"
+    exit 1
+  }
+
+  log_progress "Creating release..."
+  timeout 300 mix release --overwrite || {
+    echo "FATAL: mix release failed"
+    exit 1
+  }
+
+  if [ ! -f "_build/prod/rel/digistab_store/bin/digistab_store" ]; then
+    echo "FATAL: Release binary not created"
+    exit 1
+  fi
 }
 
 cleanup_temp_files() {
-    log_progress "Cleaning up..."
-    # Remove cache desnecessário pra economizar espaço
-    mix deps.clean --unused --build 2>/dev/null || true
-    cd assets && npm cache clean --force 2>/dev/null || true
-    cd ..
+  log_progress "Cleaning up..."
+  # Remove cache desnecessário pra economizar espaço
+  mix deps.clean --unused --build 2>/dev/null || true
+  cd assets && npm cache clean --force 2>/dev/null || true
+  cd ..
 }
 
 main() {
-    log_progress "Starting deployment..."
-    
-    setup_environment
-    check_and_install_nodejs
-    install_build_tools
-    add_temporary_swap
-    install_dependencies
-    build_application
-    remove_temporary_swap
-    cleanup_temp_files
-    
-    local duration=$((SECONDS - SCRIPT_START))
-    log_progress "SUCCESS: Deployment completed in ${duration}s"
+  log_progress "Starting deployment..."
+
+  setup_environment
+  check_and_install_nodejs
+  install_build_tools
+  add_temporary_swap
+  install_dependencies
+  build_application
+  remove_temporary_swap
+  cleanup_temp_files
+
+  local duration=$((SECONDS - SCRIPT_START))
+  log_progress "SUCCESS: Deployment completed in ${duration}s"
 }
 
 # Handle script interruption
