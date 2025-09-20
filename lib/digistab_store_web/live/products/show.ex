@@ -47,9 +47,6 @@ defmodule DigistabStoreWeb.ProductLive.Show do
     {:noreply, assign(socket, :current_photo, photo)}
   end
 
-  defp page_title(:show), do: "Show Product"
-  defp page_title(:edit), do: "Edit Product"
-
   def format_price(price) when is_integer(price) do
     Money.new(price, :BRL)
   end
