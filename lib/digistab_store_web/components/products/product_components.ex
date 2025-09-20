@@ -300,8 +300,6 @@ defmodule DigistabStoreWeb.ProductLive.ProductComponents do
   end
 
   def product_input(%{type: "custom_counter"} = assigns) do
-    # IO.inspect(assigns)
-
     ~H"""
     <div phx-feedback-for={@name} class="content-between">
       <.label for={@id} weight="font-medium"><%= @label %></.label>
