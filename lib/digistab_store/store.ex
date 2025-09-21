@@ -55,8 +55,10 @@ defmodule DigistabStore.Store do
   end
 
   def list_products(_preload? = true) do
-    list_products()
-    |> Repo.preload([:tags, :status, :category, :photos])
+    Product
+    |> order_by([p], p.inserted_at)
+    |> preload([:tags, :status, :category, :photos])
+    |> Repo.all()
   end
 
   @doc """
@@ -110,8 +112,6 @@ defmodule DigistabStore.Store do
   """
   @spec search_products(binary()) :: [Product.t()]
   def search_products(product_name) do
-    # Just for User Experience
-    :timer.sleep(1000)
     search_term = "%#{product_name}%"
 
     from(p in Product,
@@ -179,8 +179,10 @@ defmodule DigistabStore.Store do
   end
 
   def get_product!(id, _preload? = true) do
-    get_product!(id)
-    |> preload_product!()
+    Product
+    |> where(id: ^id)
+    |> preload([:tags, :status, :category, :photos])
+    |> Repo.one!()
   end
 
   @doc """
@@ -269,7 +271,7 @@ defmodule DigistabStore.Store do
     |> Product.changeset(attrs)
   end
 
-    def change_product_price(%Product{} = product, attrs \\ %{}) do
+  def change_product_price(%Product{} = product, attrs \\ %{}) do
     product
     |> Repo.preload([:status, :category])
     |> Product.price_changeset(attrs)

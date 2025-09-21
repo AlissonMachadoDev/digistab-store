@@ -86,8 +86,6 @@ defmodule DigistabStoreWeb.ProductLive.Index do
   end
 
   def handle_info({:handle_category, id}, socket) do
-    :timer.sleep(1000)
-
     socket =
       socket
       |> assign(loading: false)
