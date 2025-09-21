@@ -9,8 +9,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
   - Tag management
   - Price formatting
   - Stock control
-
-
   """
   use DigistabStoreWeb, :live_component
 
@@ -24,7 +22,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     <div>
       <.header>
         <%= @title %>
-        <!--:subtitle>Use this form to manage product records in your database.</!--:subtitle-->
       </.header>
 
       <.simple_form
@@ -49,7 +46,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
                 type="wysiwyg"
                 label="Description"
                 name="put-description"
-                value={@product.description}
+                value={@changeset.data.description}
               />
             </div>
             <div class="mb-4 h-fit rounded-md bg-white p-4">
@@ -64,27 +61,30 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
                 </div>
               </div>
             </div>
-            <div class="grid grid-rows-3 gap-4 rounded-md bg-white p-4 sm:grid-cols-3 sm:grid-rows-none bottom-20">
+            <div
+              id="price_fields"
+              class="grid grid-rows-3 gap-4 rounded-md bg-white p-4 sm:grid-cols-3 sm:grid-rows-none bottom-20"
+            >
               <.product_input
                 field={@form[:price]}
                 type="price"
                 label="Price"
-                name="put-price"
-                value={@product.price}
+                name="price"
+                value={@changeset.data.price}
               />
               <.product_input
                 field={@form[:promotional_price]}
                 type="price"
                 label="Promotional price"
-                name="put-promo-price"
-                value={@product.promotional_price}
+                name="promotional_price"
+                value={@changeset.data.promotional_price}
               />
               <.product_input
                 field={@form[:stock]}
                 type="custom_counter"
                 label="Stock"
-                name="put-stock"
-                value={@product.stock}
+                name="stock"
+                value={@changeset.data.stock}
               />
             </div>
           </div>
@@ -98,8 +98,8 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
                   collection={@status_collection}
                   name="select-status"
                   options={@status}
-                  value={select_item(@status_collection, @product.status_id) |> Map.get(:name)}
-                  item={select_item(@status_collection, @product.status_id) |> Map.get(:name)}
+                  value={select_item(@status_collection, @changeset.data.status_id) |> Map.get(:name)}
+                  item={select_item(@status_collection, @changeset.data.status_id) |> Map.get(:name)}
                 />
               </div>
               <div class="mb-4 w-full rounded-md bg-white p-4 sm:w-1/2 md:w-full">
@@ -110,8 +110,12 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
                   name="select-category"
                   collection={@categories_collection}
                   options={@categories}
-                  value={select_item(@categories_collection, @product.category_id) |> Map.get(:name)}
-                  item={select_item(@categories_collection, @product.category_id) |> Map.get(:name)}
+                  value={
+                    select_item(@categories_collection, @changeset.data.category_id) |> Map.get(:name)
+                  }
+                  item={
+                    select_item(@categories_collection, @changeset.data.category_id) |> Map.get(:name)
+                  }
                 />
               </div>
             </div>
@@ -287,6 +291,8 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
   @impl true
   def update(%{product: product} = assigns, socket) do
+    changeset = Store.change_product(product)
+
     {:ok,
      socket
      |> allow_upload(:photos,
@@ -297,50 +303,61 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
      )
      |> assign(initial_assigns(assigns.action, product))
      |> assign(assigns)
-     |> assign_form(Store.change_product(product))}
+     |> assign(:changeset, changeset)
+     |> assign_form(changeset)}
   end
 
   @impl true
   def handle_event(
-        "validate",
+        "update-description",
         %{"type" => "set-description", "value" => description},
         socket
       ) do
-    product = socket.assigns.product
+    product = Ecto.Changeset.apply_changes(socket.assigns.changeset)
 
-    socket =
-      assign(
-        socket,
-        :product,
-        %{product | description: description}
-      )
+    changeset =
+      %{product | description: description}
+      |> Store.change_product()
 
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(:changeset, changeset)
+     |> assign_form(changeset)}
+  end
+
+  @impl true
+  def handle_event(
+        "update-price",
+        %{"type" => "set-integer-price", "field" => field_name, "value" => value},
+        socket
+      ) do
+    product = Ecto.Changeset.apply_changes(socket.assigns.changeset)
+
+    value =
+      String.replace(value, ~r[\,|\.], "")
+      |> String.to_integer()
+
+    changeset =
+      product
+      |> Store.change_product_price(%{field_name => value})
+      |> Map.put(:action, :validate)
+
+    {:noreply,
+     socket
+     |> assign(:changeset, changeset)
+     |> assign_form(changeset)}
   end
 
   @impl true
   def handle_event(
         "validate",
-        %{"type" => "set-integer-price", "field" => field_name, "value" => value},
+        %{"_target" => [target]} = params,
         socket
-      ) do
-    product = socket.assigns.product
-
-    value = String.replace(value, ~r[\,|\.], "") |> String.to_integer()
-
-    field = define_field(field_name)
-
-    socket =
-      assign(
-        socket,
-        :product,
-        Map.put(product, String.to_atom(field), value)
       )
-
+      when target in ["price", "promotional_price"] do
     {:noreply, socket}
   end
 
-  @impl true
   def handle_event(
         "validate",
         %{"product" => product_params, "search_tag" => tag_name} = params,
@@ -358,10 +375,12 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
         socket.assigns.categories_collection,
         params["select-category"]
       )
-      |> validate_stock(params["put-stock"])
+      |> validate_stock(params["stock"])
+
+    product = Ecto.Changeset.apply_changes(socket.assigns.changeset)
 
     changeset =
-      socket.assigns.product
+      product
       |> Store.change_product(product_params)
       |> Map.put(:action, :validate)
 
@@ -375,21 +394,18 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
         search_tags(tags, selected_tags, tag_name)
       end
 
-    socket =
-      socket
-      |> assign_form(changeset)
-      |> assign(
-        :product,
-        Ecto.Changeset.apply_changes(changeset)
-      )
-      |> assign(assigns)
-
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(:changeset, changeset)
+     |> assign_form(changeset)
+     |> assign(assigns)}
   end
 
   def handle_event("save", %{"product" => _product_params}, socket) do
+    product = socket.assigns.changeset.data
+
     product_params =
-      socket.assigns.product
+      product
       |> Map.put(:photos, put_photos_url(socket, %{}))
       |> Map.drop([:__meta__, :__struct__])
 
@@ -420,7 +436,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     {:noreply, cancel_upload(socket, :photos, ref)}
   end
 
-  # Filters tags based on the search query and manages selected tags.
   defp search_tags(tags, selected_tags, tag_name) do
     [
       fetched_tags: Enum.filter(tags, &(&1.name =~ ~r/#{tag_name}/i)) -- selected_tags,
@@ -429,22 +444,18 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     ]
   end
 
-  # Handles S3 upload completion and associates photos with product.
-  # Manages unique photo URLs and main photo selection.
   defp put_photos_url(socket, _product) do
     {completed, []} = uploaded_entries(socket, :photos)
 
     for entry <- completed do
       key = "digistab_store/products/#{entry.client_name}"
-
       dest = Path.join("https://#{s3_config().bucket}.s3.amazonaws.com", key)
-
       %{"url" => dest}
     end
   end
 
   @doc """
-  Consumes the uploaded photo entries to mark them as processed and to clean up resources. This function is typically used after uploads have been successfully handled to perform any necessary cleanup or final processing.
+  Consumes the uploaded photo entries to mark them as processed and to clean up resources.
   """
   def consume_photos(socket, product) do
     consume_uploaded_entries(socket, :photos, fn _meta, _entry ->
@@ -454,9 +465,8 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     {:ok, product}
   end
 
-  # Persists changes to a product based on the action (`:edit` or `:new`).
   defp save_product(socket, :edit, product_params) do
-    product = Store.get_product!(socket.assigns.product.id, true)
+    product = Store.get_product!(socket.assigns.changeset.data.id, true)
 
     case Store.update_product(product, product_params) do
       {:ok, product} ->
@@ -468,7 +478,10 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
          |> push_patch(to: socket.assigns.patch)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign_form(socket, changeset)}
+        {:noreply,
+         socket
+         |> assign(:changeset, changeset)
+         |> assign_form(changeset)}
     end
   end
 
@@ -483,7 +496,10 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
          |> push_patch(to: socket.assigns.patch)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign_form(socket, changeset)}
+        {:noreply,
+         socket
+         |> assign(:changeset, changeset)
+         |> assign_form(changeset)}
     end
   end
 
@@ -493,21 +509,14 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
 
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
 
-  # Configures initial state for product creation or editing.
   defp initial_assigns(:new, _product) do
-    status_collection = DigistabStore.Store.list_status_collection()
+    status_collection = Store.list_status_collection()
+    status = Enum.map(status_collection, & &1.name)
 
-    status =
-      status_collection
-      |> Enum.map(& &1.name)
+    categories_collection = Store.list_categories()
+    categories = Enum.map(categories_collection, & &1.name)
 
-    categories_collection = DigistabStore.Store.list_categories()
-
-    categories =
-      categories_collection
-      |> Enum.map(& &1.name)
-
-    tags = DigistabStore.Store.list_tags()
+    tags = Store.list_tags()
 
     [
       status: status,
@@ -522,19 +531,13 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
   end
 
   defp initial_assigns(:edit, product) do
-    status_collection = DigistabStore.Store.list_status_collection()
+    status_collection = Store.list_status_collection()
+    status = Enum.map(status_collection, & &1.name)
 
-    status =
-      status_collection
-      |> Enum.map(& &1.name)
+    categories_collection = Store.list_categories()
+    categories = Enum.map(categories_collection, & &1.name)
 
-    categories_collection = DigistabStore.Store.list_categories()
-
-    categories =
-      categories_collection
-      |> Enum.map(& &1.name)
-
-    tags = DigistabStore.Store.list_tags()
+    tags = Store.list_tags()
 
     [
       status: status,
@@ -549,26 +552,22 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     ]
   end
 
-  # Validates stock input, converting it to an integer when necessary.
   defp validate_stock(attrs, stock) when is_integer(stock) do
     %{attrs | "stock" => stock}
   end
 
   defp validate_stock(attrs, stock) do
-    attrs
-    |> Map.put("stock", String.to_integer(stock))
+    Map.put(attrs, "stock", String.to_integer(stock))
   end
 
-  # Ensures selected values for custom fields are valid based on predefined collections.
   defp validate_custom_select(attrs, field, collection, value) do
     field_value = Enum.find(collection, fn st -> st.name == value end)
 
-    Map.put(attrs, field, field_value)
+    attrs
+    |> Map.put(field, field_value)
     |> Map.put(field <> "_id", field_value.id)
   end
 
-  # Selects an item from a list based on the provided ID.
-  # If the ID is nil, returns the first item in the list.
   defp select_item(items, id) do
     if is_nil(id) do
       List.first(items)
@@ -582,7 +581,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
   """
   def has_uploads?(uploads), do: length(uploads) > 0
 
-  # Determines the appropriate tailwind classes for the upload field based on its state.
   defp upload_field(true),
     do:
       "flex h-fit md:h-36 md:w-32 m-2 cursor-pointer rounded-md border-2 border-dashed border-gray-300 p-4 text-center"
@@ -591,7 +589,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     do:
       "flex h-36 w-full cursor-pointer rounded-md border-2 border-dashed border-gray-300 p-4 text-center"
 
-  # Truncates a filename if it exceeds a certain length.
   defp truncate_filename(filename) do
     if String.length(filename) < 19 do
       filename
@@ -604,9 +601,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     end
   end
 
-  # Prepares metadata needed for uploading files directly from the browser to S3.
-  # This function handles generating a presigned URL and setting up the required
-  # AWS fields for secure file uploads, as well as any necessary file restrictions.
   defp presign_upload(entry, socket) do
     uploads = socket.assigns.uploads
 
@@ -636,7 +630,6 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     end
   end
 
-  # s3 config params at runtime  execution
   def s3_config() do
     %{
       bucket: System.get_env("AWS_BUCKET_NAME"),
@@ -646,7 +639,7 @@ defmodule DigistabStoreWeb.ProductLive.FormComponent do
     }
   end
 
-  # Converts field names to atom keys used internally.
   defp define_field("put-price"), do: "price"
   defp define_field("put-promo-price"), do: "promotional_price"
+  defp define_field(field), do: field
 end

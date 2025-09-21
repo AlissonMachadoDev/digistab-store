@@ -269,6 +269,12 @@ defmodule DigistabStore.Store do
     |> Product.changeset(attrs)
   end
 
+    def change_product_price(%Product{} = product, attrs \\ %{}) do
+    product
+    |> Repo.preload([:status, :category])
+    |> Product.price_changeset(attrs)
+  end
+
   @doc """
   Returns the list of status_collection.
 
