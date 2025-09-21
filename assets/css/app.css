@@ -75,3 +75,27 @@
      box-shadow: 0 2.5em 0 0;
    }
  }
+
+ /* GPU Acceleration utilities */
+@layer utilities {
+
+  
+  .contain-layout-paint {
+    contain: layout paint;
+  }
+  
+  .gpu-layer {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+  
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Otimizar imagens */
+img {
+  content-visibility: auto;  /* Lazy render */
+}

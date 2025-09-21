@@ -44,6 +44,7 @@ defmodule DigistabStoreWeb.ProductCarousel do
           this.startInterval();
         }
       }"
+      x-cloak
       class="relative w-full overflow-hidden"
     >
       <div class="absolute inset-y-0 left-0 z-10 flex items-center">
@@ -70,8 +71,9 @@ defmodule DigistabStoreWeb.ProductCarousel do
         <div
           :for={{product, index} <- Enum.with_index(@featured_products)}
           class={[
-            "absolute top-0 left-0 w-full h-full transition-transform duration-500 ease-in-out transform",
-            if(index == 0, do: "translate-x-0", else: "translate-x-full")
+            "absolute top-0 left-0 w-full h-full transition-transform duration-500
+    contain-layout contain-paint ease-in-out transform",
+            if(index == 0, do: "translate-x-0", else: "translate-x-full translate3d(100%, 0, 0)")
           ]}
         >
           <div class="grid md:grid-cols-2 gap-6 px-4">
@@ -83,6 +85,7 @@ defmodule DigistabStoreWeb.ProductCarousel do
                     alt={product.name}
                     class="w-full h-48 object-cover object-center rounded-lg transition-all duration-300 hover:scale-105"
                     loading="lazy"
+                    decoding="async"
                   />
                 <% else %>
                   <div class="flex items-center justify-center w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg animate-pulse">
@@ -111,6 +114,7 @@ defmodule DigistabStoreWeb.ProductCarousel do
                       alt={Enum.at(@featured_products, index + 1).name}
                       class="w-full h-48 object-cover object-center rounded-lg transition-all duration-300 hover:scale-105"
                       loading="lazy"
+                      decoding="async"
                     />
                   <% else %>
                     <div class="flex items-center justify-center w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg animate-pulse">
