@@ -17,7 +17,7 @@ export const TrixEditor = {
     element.editor.loadHTML(element.getAttribute("value") || "");
     element.editor.element.addEventListener("trix-change", (e) => {
       this.el.dispatchEvent(new Event("change", { bubbles: true }));
-      this.pushEventTo(element, "validate", {type: "set-description", value: e.srcElement.innerHTML})
+      this.pushEventTo(element, "update-description", { type: "set-description", value: e.srcElement.innerHTML })
     });
     element.editor.element.addEventListener("trix-initialize", () => {
       element.editor.element.focus();

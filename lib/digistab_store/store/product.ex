@@ -48,6 +48,7 @@ defmodule DigistabStore.Store.Product do
   @required [:name, :price, :promotional_price, :description, :category_id, :status_id]
   # , :release_date
   @optional [:stock, :featured?]
+@price_fields [:price, :promotional_price]
 
   @max_photos 5
 
@@ -92,6 +93,12 @@ defmodule DigistabStore.Store.Product do
     |> validate_category()
     |> change_photos(attrs["photos"] || attrs[:photos])
     |> change_tags(attrs["tags"] || attrs[:tags] || [])
+  end
+
+  def price_changeset(product, attrs) do
+    product
+    |> cast(attrs, @price_fields)
+    |> validate_prices()
   end
 
   @doc """
